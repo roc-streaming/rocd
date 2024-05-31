@@ -1,0 +1,14 @@
+# build
+/rocd
+/docs/html
+
+# personal
+/TODO.org
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
