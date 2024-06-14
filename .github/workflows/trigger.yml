@@ -1,0 +1,35 @@
+name: "triggers"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docs/**
+
+jobs:
+  main:
+    if: |
+      github.repository_owner == 'roc-streaming'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - repo: roc-streaming/roc-streaming.github.io
+            branch: source
+
+    name: ${{ matrix.repo }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger
+        run: |
+          curl -s -X POST \
+            "https://api.github.com/repos/${{ matrix.repo }}/dispatches" \
+            -H 'Accept: application/vnd.github.everest-preview+json' \
+            -u "${{ secrets.REPO_TRIGGERING }}" \
+            --data '{"event_type": "Trigger", "client_payload": { "branch": "'"${{ matrix.branch}}"'" }}'
