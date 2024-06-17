@@ -37,3 +37,10 @@ jsfmt:
 toc:
 	markdown-toc --maxdepth 3 -i USAGE.md
 	markdown-toc --maxdepth 3 -i HACKING.md
+
+html:
+	rm -rf docs/html
+	mkdir -p docs/html
+	cp docs/*.html docs/html/
+	cp docs/*.json docs/html/
+	cp docs/*.yaml docs/html/
