@@ -1,0 +1,14 @@
+site_name: rocd documentation
+copyright: Copyright (c) Roc Streaming authors.
+
+repo_url: https://github.com/roc-streaming/rocd
+edit_uri: https://github.com/roc-streaming/rocd/edit/main/docs/
+
+theme:
+  name: readthedocs
+
+markdown_extensions:
+  - admonition
+
+nav:
+  - Home: index.md
