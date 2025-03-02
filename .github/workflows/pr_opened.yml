@@ -1,0 +1,26 @@
+name: "pr_opened"
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+
+permissions:
+  pull-requests: write
+  checks: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+
+jobs:
+  wait-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: poseidon/wait-for-status-checks@v0.6.0
+        with:
+          token: ${{ github.token }}
+
+  initial-status:
+    needs: [wait-build]
+    uses: roc-streaming/ci/.github/workflows/pr_status_detect.yml@main

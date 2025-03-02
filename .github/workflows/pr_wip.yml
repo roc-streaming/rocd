@@ -1,0 +1,20 @@
+name: "pr_wip"
+
+on:
+  pull_request_target:
+    types:
+      - review_request_removed
+      - converted_to_draft
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+
+jobs:
+  main:
+    uses: roc-streaming/ci/.github/workflows/pr_status_wip.yml@main
+    if: |
+      github.event.pull_request.draft == true ||
+      tojson(github.event.pull_request.requested_reviewers) == '[]'

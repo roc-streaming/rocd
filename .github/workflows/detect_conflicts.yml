@@ -1,0 +1,24 @@
+name: "detect_conflicts"
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "!*"
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+permissions:
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+
+jobs:
+  main:
+    uses: roc-streaming/ci/.github/workflows/pr_check_conflicts.yml@main

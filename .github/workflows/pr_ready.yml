@@ -1,0 +1,17 @@
+name: "pr_ready"
+
+on:
+  pull_request_target:
+    types:
+      - review_requested
+      - ready_for_review
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+
+jobs:
+  main:
+    uses: roc-streaming/ci/.github/workflows/pr_status_ready.yml@main
