@@ -9,6 +9,22 @@ theme:
 
 markdown_extensions:
   - admonition
+  - pymdownx.extra # definition lists, ...
+
+plugins:
+  - d2: # see https://landmaj.github.io/mkdocs-d2-plugin/guide/configuration/
+      scale: 0.8    # default was too large
+      pad: 5        # image padding (all 4 sides)
+      layout: dagre # https://d2lang.com/tour/layouts
+      #layout: elk
+      theme: 3      # https://d2lang.com/tour/themes
+      #sketch: True  # fancy lines
+      # dark_theme: -1
+      # TODO: https://d2lang.com/tour/layouts#directions-per-container-tala-only
+  #- plantuml:
+  #    puml_url: https://www.plantuml.com/plantuml/
+  #- build_plantuml:
+  #    render: local
 
 nav:
   - Home: index.md
