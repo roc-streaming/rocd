@@ -1,0 +1,17 @@
+direction: right
+
+frame_preparator: "..."
+frame_preparator.shape: oval
+
+packet_sender: "..."
+packet_sender.shape: oval
+
+internet: "..."
+internet.shape: cloud
+
+🎤.shape: circle
+🎤 -> frame_preparator
+
+frame_preparator -> lib.pipeline: C API:\nframes
+lib.pipeline -> packet_sender: C API:\npackets
+packet_sender -> internet
