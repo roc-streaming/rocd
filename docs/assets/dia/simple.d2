@@ -1,0 +1,23 @@
+direction: right
+
+"host 1" {
+  mic: 🎤
+  mic.shape: circle
+
+  mic -> roc.sndio { style.animated: true }
+  roc {
+    sndio -> pipeline -> netio { style.animated: true }
+  }
+}
+
+"host 2" {
+  spkr: 🔈
+  spkr.shape: circle
+
+  roc {
+    netio -> pipeline -> sndio { style.animated: true }
+  }
+  roc.sndio -> spkr { style.animated: true }
+}
+
+"host 1".roc.netio -> "host 2".roc.netio { style.animated: true }

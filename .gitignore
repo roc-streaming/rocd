@@ -1,5 +1,15 @@
+/.cache/
+/site/
+
 # cargo
-/target
+/target/
 
 # personal
 /TODO.org
+
+## general
+
+# vim
+*.sw[nop]
+# universal ctags
+/tags

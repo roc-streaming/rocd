@@ -1,0 +1,19 @@
+direction: right
+
+frame_preparator: "..."
+frame_preparator.shape: oval
+
+internet: "..."
+internet.shape: cloud
+
+mic: 🎤
+mic.shape: circle
+
+mic -> frame_preparator
+
+lib {
+  pipeline -> netio
+}
+
+frame_preparator -> lib.pipeline: C API:\nframes
+lib.netio -> internet

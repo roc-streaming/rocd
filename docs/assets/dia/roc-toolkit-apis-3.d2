@@ -1,0 +1,17 @@
+direction: right
+
+internet: "..."
+internet.shape: cloud
+
+mic: 🎤
+mic.shape: circle
+
+mic -> lib.sndio: C API
+
+lib {
+  style: { stroke-dash: 3 }
+
+  sndio -> pipeline -> netio
+}
+
+lib.netio -> internet
