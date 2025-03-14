@@ -9,8 +9,8 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number || github.ref }}
+  group: pr-${{ github.event.pull_request.number }}
 
 jobs:
   main:
-    uses: roc-streaming/ci/.github/workflows/pr_status_clear.yml@main
+    uses: roc-streaming/ci/.github/workflows/pr_status_on_close.yml@main

@@ -11,7 +11,7 @@ permissions:
   checks: read
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number || github.ref }}
+  group: pr-${{ github.event.pull_request.number }}
 
 jobs:
   wait-build:
@@ -23,4 +23,4 @@ jobs:
 
   initial-status:
     needs: [wait-build]
-    uses: roc-streaming/ci/.github/workflows/pr_status_detect.yml@main
+    uses: roc-streaming/ci/.github/workflows/pr_status_on_open.yml@main

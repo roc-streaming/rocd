@@ -1,19 +1,21 @@
 name: "pr_reviewed"
 
 on:
-  pull_request_review:
+  # triggered from webhook
+  repository_dispatch:
     types:
-      - submitted
-      - edited
+      - pull_request_review
 
 permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number || github.ref }}
+  group: pr-${{ github.event.client_payload.pr_number }}
 
 jobs:
   main:
-    uses: roc-streaming/ci/.github/workflows/pr_status_needs_revision.yml@main
-    if: |
-      github.event.review.state == 'changes_requested'
+    uses: roc-streaming/ci/.github/workflows/pr_status_on_review.yml@main
+    with:
+      pr-number: ${{ github.event.client_payload.pr_number }}
+    secrets:
+      triage-token: ${{ secrets.REPO_MANAGEMENT }}

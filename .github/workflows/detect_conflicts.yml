@@ -17,7 +17,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number || github.ref }}
+  group: conflicts-${{ github.event.pull_request.number || github.ref }}
 
 jobs:
   main:

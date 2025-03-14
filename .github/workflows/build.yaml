@@ -13,14 +13,18 @@ on:
     tags:
       - v*
 
+  # triggered from roc-toolkit
   repository_dispatch:
+    types:
+      - trigger_build
+
   workflow_dispatch:
 
   schedule:
     - cron: '0 0 * * 1'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: build-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
