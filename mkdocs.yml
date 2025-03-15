@@ -5,10 +5,42 @@ repo_url: https://github.com/roc-streaming/rocd
 edit_uri: https://github.com/roc-streaming/rocd/edit/main/docs/
 
 theme:
-  name: readthedocs
+  name: material
+  palette:
+    scheme: slate
 
 markdown_extensions:
   - admonition
+  - pymdownx.extra # definition lists, ...
+  - pymdownx.blocks.caption
+
+plugins:
+  # see https://landmaj.github.io/mkdocs-d2-plugin/guide/configuration/
+  - d2:
+      scale: 0.8    # default was too large
+      pad: 5        # image padding (all 4 sides)
+      layout: dagre # https://d2lang.com/tour/layouts
+      #layout: elk
+      theme: 3      # https://d2lang.com/tour/themes
+      #sketch: True  # fancy lines
+      dark_theme: 200
+      # TODO: https://d2lang.com/tour/layouts#directions-per-container-tala-only
+
+  # FIXME: problem with perms; see Makefile
+  #- plantuml:
+  #    puml_keyword: plantuml
+  #    puml_url: https://www.plantuml.com/plantuml/
+  #    request_timeout: 500
+  #    interaction:
+  #      enabled: false # disable controls: zoom, moving, ...
+
+  #- build_plantuml: # other PlantUML plugin; not used; see shell.nix
+  #    render: local
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
-  - Home: index.md
+  - Overview: index.md
+  - roc-cast: roc-cast.md
+  - Roadmap: roadmap.md
