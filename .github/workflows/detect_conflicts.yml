@@ -21,4 +21,6 @@ concurrency:
 
 jobs:
   main:
-    uses: roc-streaming/ci/.github/workflows/pr_check_conflicts.yml@main
+    uses: roc-streaming/ci/.github/workflows/pr_detect_conflicts.yml@main
+    secrets:
+      triage-token: "${{ secrets.REPO_MANAGEMENT }}"

@@ -1,17 +1,21 @@
 name: "pr_wip"
 
 on:
-  pull_request_target:
+  repository_dispatch:
     types:
-      - review_request_removed
-      - converted_to_draft
+      - pull_request_review_request_removed
+      - pull_request_converted_to_draft
 
 permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: pr-${{ github.event.client_payload.pr_number }}
 
 jobs:
   main:
-    uses: roc-streaming/ci/.github/workflows/pr_status_on_wip.yml@main
+    uses: roc-streaming/ci/.github/workflows/pr_handle_wip.yml@main
+    with:
+      pr-number: ${{ github.event.client_payload.pr_number }}
+    secrets:
+      triage-token: ${{ secrets.REPO_MANAGEMENT }}

@@ -1,17 +1,21 @@
 name: "pr_ready"
 
 on:
-  pull_request_target:
+  repository_dispatch:
     types:
-      - review_requested
-      - ready_for_review
+      - pull_request_review_requested
+      - pull_request_ready_for_review
 
 permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: pr-${{ github.event.client_payload.pr_number }}
 
 jobs:
   main:
-    uses: roc-streaming/ci/.github/workflows/pr_status_on_ready.yml@main
+    uses: roc-streaming/ci/.github/workflows/pr_handle_ready.yml@main
+    with:
+      pr-number: ${{ github.event.client_payload.pr_number }}
+    secrets:
+      triage-token: ${{ secrets.REPO_MANAGEMENT }}

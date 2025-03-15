@@ -1,10 +1,9 @@
 name: "pr_reviewed"
 
 on:
-  # triggered from webhook
   repository_dispatch:
     types:
-      - pull_request_review
+      - pull_request_review_submitted
 
 permissions:
   pull-requests: write
@@ -14,7 +13,7 @@ concurrency:
 
 jobs:
   main:
-    uses: roc-streaming/ci/.github/workflows/pr_status_on_review.yml@main
+    uses: roc-streaming/ci/.github/workflows/pr_handle_reviewed.yml@main
     with:
       pr-number: ${{ github.event.client_payload.pr_number }}
     secrets:
