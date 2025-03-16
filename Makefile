@@ -36,6 +36,11 @@ docs: docs-diagrams
 .PHONY: docs-diagrams
 docs-diagrams: $(images_svg)
 
+.PHONY: docs-serve
+docs-serve:
+	( find docs ; echo mkdocs.yml ) | entr -rs \
+		'$(MAKE) --no-print-directory -i docs-diagrams && mkdocs serve --no-livereload'
+
 # Diagrams: generate SVG images from d2 sources.
 #
 # '--layout dagre' is used by default; skipping it allows to set layout on a
