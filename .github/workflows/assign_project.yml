@@ -15,4 +15,4 @@ jobs:
     with:
       project: 8
     secrets:
-      triage-token: "${{ secrets.REPO_MANAGEMENT }}"
+      triage-token: "${{ secrets.REPO_TRIAGE }}"

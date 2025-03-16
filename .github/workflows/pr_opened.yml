@@ -19,4 +19,4 @@ jobs:
     with:
       pr-number: ${{ github.event.client_payload.pr_number }}
     secrets:
-      triage-token: ${{ secrets.REPO_MANAGEMENT }}
+      triage-token: ${{ secrets.REPO_TRIAGE }}

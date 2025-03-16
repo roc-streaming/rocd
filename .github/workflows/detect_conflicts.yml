@@ -23,4 +23,4 @@ jobs:
   main:
     uses: roc-streaming/ci/.github/workflows/pr_detect_conflicts.yml@main
     secrets:
-      triage-token: "${{ secrets.REPO_MANAGEMENT }}"
+      triage-token: "${{ secrets.REPO_TRIAGE }}"
