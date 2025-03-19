@@ -13,7 +13,6 @@ on:
     tags:
       - v*
 
-  # triggered from roc-toolkit
   repository_dispatch:
     types:
       - trigger_build
