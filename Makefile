@@ -37,9 +37,13 @@ docs: docs-diagrams
 docs-diagrams: $(images_svg)
 
 .PHONY: docs-serve
-docs-serve:
-	( find docs ; echo mkdocs.yml ) | entr -rs \
-		'$(MAKE) --no-print-directory -i docs-diagrams && mkdocs serve --no-livereload'
+docs-serve: docs-diagrams
+	while :; do \
+		( find docs ; echo mkdocs.yml ) | entr -drs \
+			'$(MAKE) --no-print-directory -i docs-diagrams && \
+		   	mkdocs serve --no-livereload'; \
+		pkill -s 0 mkdocs; \
+	done
 
 # Diagrams: generate SVG images from d2 sources.
 #
@@ -47,7 +51,7 @@ docs-serve:
 # per-diagram level.
 # Other options: '--sketch', '--layout elk'.
 %.svg : %.d2
-	d2 --dark-theme 200 --pad 5 --scale 0.98 $<
+	d2 --theme 0 --dark-theme 200 --pad 5 --scale 0.98 $<
 
 #---------- cleaning ----------#
 

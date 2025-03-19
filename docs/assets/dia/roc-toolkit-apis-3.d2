@@ -1,17 +1,34 @@
+vars: {
+  d2-config: {
+    theme-overrides: {
+      B4: "#fffce9"
+    }
+  }
+}
+
 direction: right
 
-internet: "..."
+x {
+  near: bottom-center
+  style.opacity: 0.0
+  controller: "library user\n(rocd)"
+  controller.shape: oval
+}
+
+internet: Network
 internet.shape: cloud
 
-mic: 🎤
+mic: mic 🎤
 mic.shape: circle
 
-mic -> lib.sndio: C API
+mic -> libroc.sndio
 
-lib {
-  style: { stroke-dash: 3 }
-
+libroc: roc_transceiver\n(libroc) {
+  sndio: sound I/O\n(roc_sndio)
+  pipeline: processing pipeline\n(roc_pipeline)
+  netio: network I/O\n(roc_netio)
   sndio -> pipeline -> netio
 }
 
-lib.netio -> internet
+libroc.netio -> internet
+x.controller -> libroc: control
