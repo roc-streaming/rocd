@@ -6,21 +6,20 @@ on:
       - "*"
     tags:
       - "!*"
-  pull_request_target:
+  repository_dispatch:
     types:
-      - opened
-      - reopened
-      - synchronize
+      - pull_request_opened
+      - pull_request_reopened
+      - pull_request_synchronize
 
 permissions:
   pull-requests: write
-  issues: write
 
 concurrency:
-  group: conflicts-${{ github.event.pull_request.number || github.ref }}
+  group: detect-conflicts
 
 jobs:
   main:
     uses: roc-streaming/ci/.github/workflows/pr_detect_conflicts.yml@main
     secrets:
-      triage-token: "${{ secrets.REPO_TRIAGE }}"
+      triage-token: ${{ secrets.REPO_TRIAGE }}
