@@ -1,16 +1,16 @@
 name: "build"
 
 on:
-  pull_request:
-    branches:
-      - main
-      - v*
-
   push:
     branches:
       - main
       - v*
     tags:
+      - v*
+
+  pull_request:
+    branches:
+      - main
       - v*
 
   repository_dispatch:

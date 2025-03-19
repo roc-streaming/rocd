@@ -10,12 +10,12 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-${{ github.event.client_payload.pr_number }}
+  group: pullreq-${{ github.event.client_payload.number }}
 
 jobs:
   main:
     uses: roc-streaming/ci/.github/workflows/pr_handle_wip.yml@main
     with:
-      pr-number: ${{ github.event.client_payload.pr_number }}
+      pr-number: ${{ github.event.client_payload.number }}
     secrets:
       triage-token: ${{ secrets.REPO_TRIAGE }}
