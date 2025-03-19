@@ -1,0 +1,46 @@
+vars: {
+  d2-config: {
+    theme-overrides: {
+      B5: "#fffce9"
+      B6: "#fff0e1"
+    }
+  }
+}
+
+direction: right
+
+h1: host 1
+h2: host 2
+h3: host 3
+
+h1 {
+  direction: down
+  app: "your\napplication"
+  rocd {
+    roc-toolkit
+  }
+  app <-> rocd: REST API
+}
+h2 {
+  app: "your\napplication"
+  rocd {
+    roc-toolkit
+  }
+  app <-> rocd: REST API
+}
+h3 {
+  rocd {
+    roc-toolkit
+  }
+  app: "your\napplication"
+  rocd <-> app: REST API
+}
+
+h1.rocd <-> h2.rocd: configuration (ZMQ) { style: { stroke: deepskyblue } }
+h1.rocd.roc-toolkit <-> h2.rocd.roc-toolkit: streaming (RTP) { style.animated: true }
+
+h2.rocd <-> h3.rocd: configuration (ZMQ) { style: { stroke: deepskyblue } }
+h2.rocd.roc-toolkit <-> h3.rocd.roc-toolkit: streaming (RTP) { style.animated: true }
+
+h3.rocd <-> h1.rocd: configuration (ZMQ) { style: { stroke: deepskyblue } }
+h3.rocd.roc-toolkit <-> h1.rocd.roc-toolkit: streaming (RTP) { style.animated: true }

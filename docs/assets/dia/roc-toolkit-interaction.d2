@@ -1,0 +1,51 @@
+vars: {
+  d2-config: {
+    theme-overrides: {
+      B5: "#fffce9"
+    }
+  }
+}
+
+direction: right
+
+rocd-1: "rocd (host 1)" {
+  mic: 🎤
+  mic.shape: circle
+
+  mic -> roc.sndio { style.animated: true }
+  roc: "roc_transceiver\n(libroc)" {
+    netio: "network I/O\n(roc_netio)"
+    pipeline: "processing pipeline\n(roc_pipeline)"
+    sndio: "sound I/O\n(roc_sndio)"
+    sndio -> pipeline -> netio { style.animated: true }
+  }
+}
+
+rocd-2: "rocd (host 2)" {
+  spkr: 🔈
+  spkr.shape: circle
+
+  roc: "roc_transceiver\n(libroc)" {
+    netio: "network I/O\n(roc_netio)"
+    pipeline: "processing pipeline\n(roc_pipeline)"
+    sndio: "sound I/O\n(roc_sndio)"
+    netio -> pipeline -> sndio { style.animated: true }
+  }
+  roc.sndio -> spkr { style.animated: true }
+}
+
+rocd-3: "rocd (host 3)" {
+  spkr: 🔈
+  spkr.shape: circle
+
+  roc: "roc_transceiver\n(libroc)" {
+    netio: "network I/O\n(roc_netio)"
+    pipeline: "processing pipeline\n(roc_pipeline)"
+    sndio: "sound I/O\n(roc_sndio)"
+    netio -> pipeline -> sndio { style.animated: true }
+  }
+  roc.sndio -> spkr { style.animated: true }
+}
+
+rocd-1.roc.netio -> rocd-2.roc.netio { style.animated: true }
+rocd-1.roc.netio -> rocd-3.roc.netio { style.animated: true }

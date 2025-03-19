@@ -1,0 +1,63 @@
+vars: {
+  d2-config: {
+    theme-overrides: {
+      B6: "#fffce9"
+    }
+  }
+}
+
+direction: right
+
+user.shape: person
+
+user -> desktop.x.roc-cast
+user -> android.roc-cast.ui
+user -> x.browser.roc-cast
+
+desktop: Desktop {
+  direction: right
+  x {
+    style.opacity: 0.0
+    roc-cast: roc-cast\nw/ native UI
+    rocd
+    roc-cast -> rocd: HTTP API
+  }
+}
+
+android: Android {
+  near: top-right
+  direction: right
+  roc-cast {
+    ui: native UI
+    rocd: embeddable\nrocd
+  }
+  roc-cast.ui -> roc-cast.rocd: HTTP API
+}
+
+x {
+  near: bottom-right
+  direction: right
+  style.opacity: 0.0
+
+  browser: Web browser {
+    roc-cast: roc-cast\nweb UI
+  }
+
+  raspberry: Raspberry Pi {
+    roc-cast: roc-cast\nweb server
+    rocd
+    roc-cast -> rocd: HTTP API
+  }
+}
+
+x.browser.roc-cast -> x.raspberry.roc-cast: HTTP
+
+desktop.x.rocd -- android.roc-cast.rocd : ZMQ and RTP{
+  style.animated: true
+}
+desktop.x.rocd -- x.raspberry.rocd : ZMQ and RTP{
+  style.animated: true
+}
+x.raspberry.rocd -- android.roc-cast.rocd : ZMQ and RTP{
+  style.animated: true
+}

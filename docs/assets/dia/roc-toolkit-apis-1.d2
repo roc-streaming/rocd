@@ -1,17 +1,31 @@
+vars: {
+  d2-config: {
+    theme-overrides: {
+      B4: "#fffce9"
+    }
+  }
+}
+
 direction: right
 
-frame_preparator: "..."
+frame_preparator: library user\n(rocd)
 frame_preparator.shape: oval
 
-packet_sender: "..."
+packet_sender: library user\n(rocd)
 packet_sender.shape: oval
 
-internet: "..."
+internet: Network
 internet.shape: cloud
 
-🎤.shape: circle
-🎤 -> frame_preparator
+mic: mic 🎤 {
+  shape: circle
+}
+mic -> frame_preparator
 
-frame_preparator -> lib.pipeline: C API:\nframes
-lib.pipeline -> packet_sender: C API:\npackets
+libroc: roc_sender_encoder\n(libroc) {
+  pipeline: processing pipeline\n(roc_pipeline)
+}
+
+frame_preparator -> libroc.pipeline: C API:\nraw frames
+libroc.pipeline -> packet_sender: C API:\nencoded packets
 packet_sender -> internet
