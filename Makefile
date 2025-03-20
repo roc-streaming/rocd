@@ -15,11 +15,29 @@ default: help
 
 .PHONY: help
 help:
-	@echo >&2 "Targets:"
+	@echo >&2 "Primary targets:"
 	@echo >&2
+	@echo >&2 "  build - build rocd"
+	@echo >&2 "  run   - (build and) run rocd"
 	@echo >&2 "  docs  - build docs"
 	@echo >&2 "  clean - clean artifacts"
-	@echo >&2 "  ..." # TODO
+	@echo >&2
+	@echo >&2 "Auxiliary targets:"
+	@echo >&2
+	@echo >&2 "  docs-diagrams  - generate diagrams"
+	@echo >&2 "  docs-serve     - run mkdocs web-server with monitoring file changes"
+	@echo >&2 "  clean-diagrams - remove generated diagrams"
+	@echo >&2 "  clean-all      - remove all temporary files (binaries, docs, LSP caches, ...)"
+
+#---------- build/run/test ----------#
+
+.PHONY: build
+build:
+	cargo build
+
+.PHONY: run
+run:
+	cargo run
 
 #---------- documentation ----------#
 
@@ -39,10 +57,10 @@ docs-diagrams: $(images_svg)
 .PHONY: docs-serve
 docs-serve: docs-diagrams
 	while :; do \
-		( find docs ; echo mkdocs.yml ) | entr -drs \
-			'$(MAKE) --no-print-directory -i docs-diagrams && \
-		   	mkdocs serve --no-livereload'; \
-		pkill -s 0 mkdocs; \
+	  ( find docs ; echo mkdocs.yml ) | entr -drs \
+	    '$(MAKE) --no-print-directory -i docs-diagrams && \
+	    mkdocs serve --no-livereload'; \
+	  pkill -s 0 mkdocs; \
 	done
 
 # Diagrams: generate SVG images from d2 sources.
@@ -56,7 +74,7 @@ docs-serve: docs-diagrams
 #---------- cleaning ----------#
 
 .PHONY: clean
-clean: clean-diagrams
+clean:
 	rm -rf $(temp_dirs)
 
 .PHONY: clean-diagrams
@@ -64,5 +82,5 @@ clean-diagrams:
 	rm -f $(temp_images)
 
 .PHONY: clean-all
-clean-all: clean
+clean-all: clean clean-diagrams
 	rm -rf $(temp_dirs_aux)
