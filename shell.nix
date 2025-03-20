@@ -6,9 +6,14 @@ let
 in
 pkgs.mkShell {
   nativeBuildInputs = [
+    unstable.cargo
+    unstable.rustc
+    unstable.rustfmt
+
+    # add some Python packages
     (
       let
-        my_py_pkgs = # add some Python packages
+        my_py_pkgs =
           p: with p; [
             mkdocs
             mkdocs-material
@@ -76,5 +81,9 @@ pkgs.mkShell {
       in
       unstable.python3.withPackages my_py_pkgs
     )
+  ];
+
+  buildInputs = [
+    pkgs.entr # needed for `make docs-serve`
   ];
 }

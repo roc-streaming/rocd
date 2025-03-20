@@ -1,0 +1,22 @@
+# This config is also used by neovim via rust-analyzer plugin.
+
+edition = "2024"
+
+max_width = 100 # line length
+
+# TODO: consider switching to "Off"
+use_small_heuristics = "Max" # bulk updates of `*_width` settings (except `comment_width`)
+#array_width = 100
+#chain_width = 100
+#fn_call_width = 100
+#single_line_let_else_max_width = 80
+
+fn_params_layout = "Compressed"
+match_block_trailing_comma = true # put a trailing comma after a block based match arm
+
+# Unstable options for future:
+# - unstable_features = true
+# - comment_width = 100
+# - imports_granularity = "Module"
+# - normalize_doc_attributes = true
+# - struct_field_align_threshold = 20

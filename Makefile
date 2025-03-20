@@ -12,17 +12,49 @@ temp_dirs_aux := \
 
 pwd := $(shell pwd)
 uid := $(shell id -u)
+gid := $(shell id -g)
+
+# XXX
+unstable_rustfmt_opts := \
+  --config unstable_features=true \
+  --config imports_granularity=Module \
+  --config normalize_doc_attributes=true \
+  --config comment_width=100
+#  --config struct_field_align_threshold=30
 
 
 default: help
 
 .PHONY: help
 help:
-	@echo >&2 "Targets:"
+	@echo >&2 "Primary targets:"
 	@echo >&2
+	@echo >&2 "  build - build rocd"
+	@echo >&2 "  run   - (build and) run rocd"
 	@echo >&2 "  docs  - build docs"
 	@echo >&2 "  clean - clean artifacts"
-	@echo >&2 "  ..." # TODO
+	@echo >&2
+	@echo >&2 "Auxiliary targets:"
+	@echo >&2
+	@echo >&2 "  docs-diagrams  - generate diagrams"
+	@echo >&2 "  docs-serve     - run mkdocs web-server with monitoring file changes"
+	@echo >&2 "  clean-diagrams - remove generated diagrams"
+	@echo >&2 "  clean-all      - remove all temporary files (binaries, docs, LSP caches, ...)"
+	@echo >&2 "  fmt            - format the source code (may use some unstable features!)"
+
+#---------- build/run/test ----------#
+
+.PHONY: build
+build:
+	cargo build
+
+.PHONY: run
+run:
+	cargo run
+
+.PHONY: fmt
+fmt:
+	cargo fmt -- $(unstable_rustfmt_opts)
 
 #---------- documentation ----------#
 
@@ -38,9 +70,9 @@ docs: docs-diagrams
 
 .PHONY: docs-docker
 docs-docker:
-	docker run --rm -t -v '$(pwd):$(pwd)' -w '$(pwd)' -u '$(shell id -u):$(shell id -g)' \
-		rocstreaming/env-sphinx \
-		mkdocs build
+	docker run --rm -t -v '$(pwd):$(pwd)' -w '$(pwd)' -u '$(uid):$(gid)' \
+	  rocstreaming/env-sphinx \
+	  mkdocs build
 
 .PHONY: docs-diagrams
 docs-diagrams: $(images_svg)
@@ -48,10 +80,10 @@ docs-diagrams: $(images_svg)
 .PHONY: docs-serve
 docs-serve: docs-diagrams
 	while :; do \
-		( find docs ; echo mkdocs.yml ) | entr -drs \
-			'$(MAKE) --no-print-directory -i docs-diagrams && \
-		   	mkdocs serve --no-livereload'; \
-		pkill -s 0 mkdocs; \
+	  ( find docs ; echo mkdocs.yml ) | entr -drs \
+	    '$(MAKE) --no-print-directory -i docs-diagrams && \
+	    mkdocs serve --no-livereload'; \
+	  pkill -s 0 mkdocs; \
 	done
 
 # Diagrams: generate SVG images from d2 sources.
@@ -74,6 +106,4 @@ clean-diagrams:
 
 .PHONY: clean-all
 clean-all: clean
-	rm -rf $(temp_dirs)
 	rm -rf $(temp_dirs_aux)
-	rm -rf $(temp_images)
