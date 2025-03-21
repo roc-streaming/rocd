@@ -9,9 +9,6 @@ on:
       - v*
 
   pull_request:
-    branches:
-      - main
-      - v*
 
   repository_dispatch:
     types:
@@ -21,6 +18,9 @@ on:
 
   schedule:
     - cron: '0 0 * * 1'
+
+permissions:
+  contents: read
 
 concurrency:
   group: build-${{ github.event.pull_request.number || github.ref }}

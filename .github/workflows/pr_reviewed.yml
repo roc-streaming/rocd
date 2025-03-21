@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   main:
-    uses: roc-streaming/ci/.github/workflows/pr_handle_reviewed.yml@main
+    uses: roc-streaming/ci/.github/workflows/pr_status_reviewed.yml@main
     with:
       pr-number: ${{ github.event.client_payload.number }}
     secrets:
