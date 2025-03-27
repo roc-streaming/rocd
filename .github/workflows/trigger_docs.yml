@@ -1,4 +1,4 @@
-name: "triggers"
+name: "trigger_docs"
 
 on:
   push:
