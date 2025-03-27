@@ -1,0 +1,29 @@
+name: "triggers"
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: write
+
+concurrency:
+  group: triggers
+
+jobs:
+  main:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repo: roc-streaming.github.io
+            branch: source
+
+    name: ${{ matrix.repo }}
+    uses: roc-streaming/ci/.github/workflows/trigger_build.yml@main
+    with:
+      repo: ${{ matrix.repo }}
+      branch: ${{ matrix.branch }}
+    secrets:
+      ci-token: ${{ secrets.REPO_ACTIONS }}
