@@ -4,6 +4,9 @@ copyright: Copyright (c) Roc Streaming authors.
 repo_url: https://github.com/roc-streaming/rocd
 edit_uri: https://github.com/roc-streaming/rocd/edit/main/docs/
 
+strict: true
+use_directory_urls: false
+
 theme:
   name: material
   features:
@@ -29,17 +32,17 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 plugins:
-  # see https://landmaj.github.io/mkdocs-d2-plugin/guide/configuration/
-  - d2:
-      scale: 0.8    # default was too large
-      pad: 5        # image padding (all 4 sides)
-      layout: dagre # https://d2lang.com/tour/layouts
-      #layout: elk
-      theme: 3      # https://d2lang.com/tour/themes
-      #sketch: True  # fancy lines
-      dark_theme: 200
-      # TODO: https://d2lang.com/tour/layouts#directions-per-container-tala-only
   - search
+  # see https://landmaj.github.io/mkdocs-d2-plugin/guide/configuration/
+  #- d2:
+  #    scale: 0.8    # default was too large
+  #    pad: 5        # image padding (all 4 sides)
+  #    layout: dagre # https://d2lang.com/tour/layouts
+  #    #layout: elk
+  #    theme: 3      # https://d2lang.com/tour/themes
+  #    #sketch: True  # fancy lines
+  #    dark_theme: 200
+  #    # TODO: https://d2lang.com/tour/layouts#directions-per-container-tala-only
   # FIXME: problem with perms; see Makefile
   #- plantuml:
   #    puml_keyword: plantuml

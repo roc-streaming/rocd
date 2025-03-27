@@ -10,6 +10,9 @@ temp_dirs := \
 temp_dirs_aux := \
   .cache/
 
+pwd := $(shell pwd)
+uid := $(shell id -u)
+
 
 default: help
 
@@ -30,8 +33,14 @@ help:
 # TODO: report to upstream
 .PHONY: docs
 docs: docs-diagrams
-	mkdocs build --no-directory-urls
+	mkdocs build
 	#if [ -d site ]; then chmod -R u+w site ; fi
+
+.PHONY: docs-docker
+docs-docker:
+	docker run --rm -t -v '$(pwd):$(pwd)' -w '$(pwd)' -u '$(shell id -u):$(shell id -g)' \
+		rocstreaming/env-sphinx \
+		mkdocs build
 
 .PHONY: docs-diagrams
 docs-diagrams: $(images_svg)
@@ -56,7 +65,7 @@ docs-serve: docs-diagrams
 #---------- cleaning ----------#
 
 .PHONY: clean
-clean: clean-diagrams
+clean:
 	rm -rf $(temp_dirs)
 
 .PHONY: clean-diagrams
@@ -65,4 +74,6 @@ clean-diagrams:
 
 .PHONY: clean-all
 clean-all: clean
+	rm -rf $(temp_dirs)
 	rm -rf $(temp_dirs_aux)
+	rm -rf $(temp_images)
