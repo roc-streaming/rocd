@@ -63,8 +63,12 @@ pub enum DeviceDriver {
 //}
 
 pub async fn get_all() -> Vec<Device> {
-    return vec![Device {
-        uid: "uid".into(),
+    vec![get_device("uid").await]
+}
+
+pub async fn get_device(uid: &str) -> Device {
+    Device {
+        uid: uid.into(),
         system_name: "sname".into(),
         display_name: "dname".into(),
         type_: DeviceType::Sink,
@@ -73,5 +77,5 @@ pub async fn get_all() -> Vec<Device> {
         is_stream: true,
         status: DeviceStatus::Disabled,
         is_muted: false,
-    }];
+    }
 }

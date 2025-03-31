@@ -1,12 +1,16 @@
+cargo_src := $(shell find src -type f)
+cargo_out := target/debug/rocd
+
 images_src := $(wildcard docs/assets/dia/*.d2)
 images_svg := $(patsubst %.d2,%.svg,$(images_src))
 
 temp_images := \
   docs/assets/dia/*.png \
   docs/assets/dia/*.svg
-temp_dirs := \
+temp_files := \
   site/ \
-  target/
+  target/ \
+  rest/openapi.html
 temp_dirs_aux := \
   .cache/
 
@@ -45,7 +49,9 @@ help:
 #---------- build/run/test ----------#
 
 .PHONY: build
-build:
+build: $(cargo_out) rest/openapi.json
+
+$(cargo_out): $(cargo_src)
 	cargo build
 
 .PHONY: run
@@ -56,6 +62,14 @@ run:
 fmt:
 	cargo fmt -- $(unstable_rustfmt_opts)
 
+#---------- openapi ----------#
+
+rest/openapi.json: $(cargo_out)
+	cargo run rocd -- --dump-openapi > rest/openapi.json
+
+rest/openapi.html: rest/openapi.json
+	openapi build-docs -o $@ $<
+
 #---------- documentation ----------#
 
 # chmod is a fix for mkdocs_puml plugin on Nixos: site/assets has u-w permission
@@ -64,7 +78,7 @@ fmt:
 # - see `stat /nix/store/*-mkdocs_puml-*/lib/python*/site-packages/mkdocs_puml/static/`
 # TODO: report to upstream
 .PHONY: docs
-docs: docs-diagrams
+docs: docs-diagrams docs-openapi
 	mkdocs build
 	#if [ -d site ]; then chmod -R u+w site ; fi
 
@@ -72,10 +86,13 @@ docs: docs-diagrams
 docs-docker:
 	docker run --rm -t -v '$(pwd):$(pwd)' -w '$(pwd)' -u '$(uid):$(gid)' \
 	  rocstreaming/env-sphinx \
-	  mkdocs build
+	  make docs
 
 .PHONY: docs-diagrams
 docs-diagrams: $(images_svg)
+
+.PHONY: docs-openapi
+docs-openapi: rest/openapi.html
 
 .PHONY: docs-serve
 docs-serve: docs-diagrams
@@ -98,7 +115,7 @@ docs-serve: docs-diagrams
 
 .PHONY: clean
 clean:
-	rm -rf $(temp_dirs)
+	rm -rf $(temp_files)
 
 .PHONY: clean-diagrams
 clean-diagrams:

@@ -1,0 +1,152 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "rocd REST API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/devices": {
+      "get": {
+        "operationId": "list_devices",
+        "responses": {
+          "200": {
+            "description": "Response with json format data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/rocd.devices.Device"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{uid}": {
+      "get": {
+        "operationId": "read_device",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Get parameter `uid` from request url path.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response with json format data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/rocd.devices.Device"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_device",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Get parameter `uid` from request url path.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response with json format data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/rocd.devices.Device"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "rocd.devices.Device": {
+        "type": "object",
+        "required": [
+          "uid",
+          "system_name",
+          "display_name",
+          "type",
+          "driver",
+          "is_hardware",
+          "is_stream",
+          "status",
+          "is_muted"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string"
+          },
+          "driver": {
+            "$ref": "#/components/schemas/rocd.devices.DeviceDriver"
+          },
+          "is_hardware": {
+            "type": "boolean"
+          },
+          "is_muted": {
+            "type": "boolean"
+          },
+          "is_stream": {
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/rocd.devices.DeviceStatus"
+          },
+          "system_name": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/rocd.devices.DeviceType"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "rocd.devices.DeviceDriver": {
+        "type": "string",
+        "enum": [
+          "pipewire",
+          "pulseaudio"
+        ]
+      },
+      "rocd.devices.DeviceStatus": {
+        "type": "string",
+        "enum": [
+          "disabled",
+          "enabled",
+          "unavailable"
+        ]
+      },
+      "rocd.devices.DeviceType": {
+        "type": "string",
+        "enum": [
+          "sink",
+          "source"
+        ]
+      }
+    }
+  }
+}

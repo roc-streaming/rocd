@@ -1,5 +1,6 @@
 /.cache/
 /site/
+/rest/openapi.html
 
 # cargo
 /target/
