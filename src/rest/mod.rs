@@ -1,42 +1,40 @@
-use crate::devices;
+use crate::devices::{self, Device};
 use salvo::logging::Logger;
+use salvo::oapi::extract::*;
 use salvo::prelude::*;
+use salvo_craft_macros::craft;
 use std::io::Result;
 use std::sync::Arc;
 
-#[endpoint(status_codes(200))]
-async fn list_devices(_req: &mut Request, _resp: &mut Response) -> Json<Vec<devices::Device>> {
-    //tracing::debug!(req = ?req, "list_devices()"); // TODO: how to print debug level???
-    return Json(devices::get_all().await);
-}
-
-// TODO
-#[endpoint]
-async fn get_device(resp: &mut Response) {
-    resp.render("device info");
-}
-
-// TODO
-#[endpoint]
-async fn update_device(resp: &mut Response) {
-    resp.render("updated device info");
-}
-
 pub struct RestServer {
+    controller: Arc<Controller>,
     router: Arc<Router>,
+    openapi: OpenApi,
 }
 
 impl RestServer {
     pub fn new() -> Self {
-        let router = Arc::new(
-            Router::new()
-                .push(Router::new().get(list_devices)) // default
-                .push(Router::with_path("devices").get(list_devices))
-                .push(Router::with_path("devices/{uid}").get(get_device))
-                .push(Router::with_path("devices/{uid}").patch(update_device)),
-        );
+        // controller methods implement request handlers (endpoints)
+        let controller = Arc::new(Controller::new());
 
-        RestServer { router }
+        // router maps paths to controller methods
+        let router = Router::new()
+            // Device API
+            .push(Router::with_path("devices").get(controller.list_devices()))
+            .push(
+                Router::with_path("devices/{uid}")
+                    .get(controller.read_device())
+                    .put(controller.update_device()),
+            );
+
+        // add auto-generate openapi endpoints
+        let version = env!("CARGO_PKG_VERSION"); // compile-time env read
+        let openapi = OpenApi::new("rocd REST API", version).merge_router(&router);
+        let router = router
+            .push(openapi.clone().into_router("/openapi/openapi.json"))
+            .push(ReDoc::new("/openapi/openapi.json").into_router("/openapi/"));
+
+        RestServer { controller, router: Arc::new(router), openapi }
     }
 
     pub async fn serve(&self, host: &str, port: u16) -> Result<()> {
@@ -46,5 +44,34 @@ impl RestServer {
         let acceptor = TcpListener::new(format!("{}:{}", host, port)).bind().await;
 
         Server::new(acceptor).try_serve(service).await
+    }
+
+    pub fn openapi_json(&self) -> String {
+        self.openapi.to_pretty_json().unwrap() + "\n"
+    }
+}
+
+// craft requires pub
+pub struct Controller {}
+
+#[craft]
+impl Controller {
+    fn new() -> Self {
+        Controller {}
+    }
+
+    #[craft(endpoint(operation_id = "list_devices", status_codes(200)))]
+    async fn list_devices(self: &Arc<Self>) -> Json<Vec<Device>> {
+        Json(devices::get_all().await)
+    }
+
+    #[craft(endpoint(operation_id = "read_device"))]
+    async fn read_device(self: &Arc<Self>, uid: PathParam<&str>) -> Json<Device> {
+        Json(devices::get_device(uid.into_inner()).await)
+    }
+
+    #[craft(endpoint(operation_id = "update_device"))]
+    async fn update_device(self: &Arc<Self>, uid: PathParam<&str>) -> Json<Device> {
+        Json(devices::get_device(uid.into_inner()).await)
     }
 }
