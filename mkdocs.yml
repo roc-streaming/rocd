@@ -33,25 +33,6 @@ markdown_extensions:
 
 plugins:
   - search
-  # see https://landmaj.github.io/mkdocs-d2-plugin/guide/configuration/
-  #- d2:
-  #    scale: 0.8    # default was too large
-  #    pad: 5        # image padding (all 4 sides)
-  #    layout: dagre # https://d2lang.com/tour/layouts
-  #    #layout: elk
-  #    theme: 3      # https://d2lang.com/tour/themes
-  #    #sketch: True  # fancy lines
-  #    dark_theme: 200
-  #    # TODO: https://d2lang.com/tour/layouts#directions-per-container-tala-only
-  # FIXME: problem with perms; see Makefile
-  #- plantuml:
-  #    puml_keyword: plantuml
-  #    puml_url: https://www.plantuml.com/plantuml/
-  #    request_timeout: 500
-  #    interaction:
-  #      enabled: false # disable controls: zoom, moving, ...
-  #- build_plantuml: # other PlantUML plugin; not used; see shell.nix
-  #    render: local
 
 extra_css:
   - stylesheets/extra.css
