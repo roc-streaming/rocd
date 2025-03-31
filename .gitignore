@@ -13,3 +13,6 @@
 *.sw[nop]
 # universal ctags
 /tags
+
+# emacs
+.dir-config.el
