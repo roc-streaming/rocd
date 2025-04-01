@@ -6,26 +6,44 @@ mod models;
 mod rest;
 
 use crate::rest::RestServer;
-use std::env::args;
+use clap::Parser;
 use std::io::{Write, stdout};
 use std::process::exit;
+
+#[derive(Parser, Debug)]
+#[command(about = "rocd server")]
+struct CLI {
+    /// server host
+    #[arg(long, default_value = "127.0.0.1")]
+    host: String,
+
+    /// server port
+    #[arg(long, default_value_t = 3000)]
+    port: u16,
+
+    /// dump OpenAPI specification in JSON format to stdout and exit
+    #[arg(long, default_value_t = false)]
+    dump_openapi: bool,
+}
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt().init();
 
-    let server = RestServer::new();
+    let opts = CLI::parse();
 
-    if args().last().unwrap_or("".into()) == "--dump-openapi" {
+    let server = RestServer::new();
+    if opts.dump_openapi {
         if let Err(_) = stdout().write_all(server.openapi_json().as_bytes()) {
             exit(1);
         }
-
         exit(0);
     }
 
-    if let Err(err) = server.serve("127.0.0.1", 3000).await {
-        eprintln!("http server failed: {}", err);
+    tracing::info!("starting server with options {opts:?}");
+
+    if let Err(err) = server.serve(&opts.host, opts.port).await {
+        tracing::error!("http server failed: {}", err);
         exit(1);
     }
 }
