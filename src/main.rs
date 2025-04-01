@@ -2,6 +2,7 @@
 #![allow(dead_code)] // TODO: remove it later
 
 mod devices;
+mod models;
 mod rest;
 
 use crate::rest::RestServer;
