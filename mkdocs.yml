@@ -44,5 +44,7 @@ nav:
       - P2P protocol: implementation/p2p_protocol.md
       - Use of Roc Toolkit: implementation/roc_toolkit.md
       - Relation to Roc Cast: implementation/roc_cast.md
+  - Hacking:
+      - Dev dependencies: hacking/dev_dependencies.md
   - Glossary: glossary.md
   - Roadmap: roadmap.md
