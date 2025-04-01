@@ -1,4 +1,5 @@
-use crate::devices::{self, Device};
+use crate::devices;
+use crate::models::*;
 use salvo::logging::Logger;
 use salvo::oapi::extract::*;
 use salvo::prelude::*;
