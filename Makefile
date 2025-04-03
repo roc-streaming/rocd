@@ -10,7 +10,7 @@ temp_images := \
 temp_files := \
   site/ \
   target/ \
-  rest/openapi.html
+  openapi/openapi.html
 temp_dirs_aux := \
   .cache/
 
@@ -49,10 +49,13 @@ help:
 #---------- build/run/test ----------#
 
 .PHONY: build
-build: $(cargo_out) rest/openapi.json
+build: $(cargo_out) openapi/openapi.json
 
 $(cargo_out): $(cargo_src)
 	cargo build
+
+openapi/openapi.json: $(cargo_out)
+	cargo run rocd -- --dump-openapi > openapi/openapi.json
 
 .PHONY: run
 run:
@@ -62,22 +65,10 @@ run:
 fmt:
 	cargo fmt -- $(unstable_rustfmt_opts)
 
-#---------- openapi ----------#
-
-rest/openapi.json: $(cargo_out)
-	cargo run rocd -- --dump-openapi > rest/openapi.json
-
-rest/openapi.html: rest/openapi.json
-	if openapi --version &>/dev/null ; then \
-	  openapi build-docs -o $@ $< ; \
-	else \
-	  echo "[WW] openapi tool not found; skipped bundling openapi.json" ; \
-	fi
-
 #---------- documentation ----------#
 
 .PHONY: docs
-docs: docs-diagrams docs-openapi
+docs: docs-diagrams docs-site docs-openapi
 	mkdocs build
 
 .PHONY: docs-docker
@@ -85,12 +76,6 @@ docs-docker:
 	docker run --rm -t -v '$(pwd):$(pwd)' -w '$(pwd)' -u '$(uid):$(gid)' \
 	  rocstreaming/env-sphinx \
 	  make docs
-
-.PHONY: docs-diagrams
-docs-diagrams: $(images_svg)
-
-.PHONY: docs-openapi
-docs-openapi: rest/openapi.html
 
 .PHONY: docs-serve
 docs-serve: docs-diagrams
@@ -101,6 +86,9 @@ docs-serve: docs-diagrams
 	  pkill -s 0 mkdocs; \
 	done
 
+.PHONY: docs-diagrams
+docs-diagrams: $(images_svg)
+
 # Diagrams: generate SVG images from d2 sources.
 #
 # '--layout dagre' is used by default; skipping it allows to set layout on a
@@ -108,6 +96,18 @@ docs-serve: docs-diagrams
 # Other options: '--sketch', '--layout elk'.
 %.svg : %.d2
 	d2 --theme 0 --dark-theme 200 --pad 5 --scale 0.98 $<
+
+.PHONY: docs-site
+docs-site:
+	mkdocs build
+
+.PHONY: docs-openapi
+docs-openapi:
+	if openapi --version &>/dev/null ; then \
+	  openapi build-docs -o openapi/openapi.html openapi/openapi.json ; \
+	else \
+	  echo "[WW] openapi tool not found; skipped bundling openapi.json" ; \
+	fi
 
 #---------- cleaning ----------#
 
