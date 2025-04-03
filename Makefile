@@ -55,7 +55,7 @@ $(cargo_out): $(cargo_src)
 	cargo build
 
 openapi/openapi.json: $(cargo_out)
-	cargo run rocd -- --dump-openapi > openapi/openapi.json
+	cargo run -- --dump-openapi > openapi/openapi.json
 
 .PHONY: run
 run:
