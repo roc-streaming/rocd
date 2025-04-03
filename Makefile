@@ -18,7 +18,7 @@ pwd := $(shell pwd)
 uid := $(shell id -u)
 gid := $(shell id -g)
 
-# XXX
+# XXX: update after stabilization
 unstable_rustfmt_opts := \
   --config unstable_features=true \
   --config imports_granularity=Module \
@@ -68,19 +68,17 @@ rest/openapi.json: $(cargo_out)
 	cargo run rocd -- --dump-openapi > rest/openapi.json
 
 rest/openapi.html: rest/openapi.json
-	openapi build-docs -o $@ $<
+	if openapi --version &>/dev/null ; then \
+	  openapi build-docs -o $@ $< ; \
+	else \
+	  echo "[WW] openapi tool not found; skipped bundling openapi.json" ; \
+	fi
 
 #---------- documentation ----------#
 
-# chmod is a fix for mkdocs_puml plugin on Nixos: site/assets has u-w permission
-# possible reason:
-# - https://github.com/MikhailKravets/mkdocs_puml/blob/2.3.0/mkdocs_puml/plugin.py#L222
-# - see `stat /nix/store/*-mkdocs_puml-*/lib/python*/site-packages/mkdocs_puml/static/`
-# TODO: report to upstream
 .PHONY: docs
 docs: docs-diagrams docs-openapi
 	mkdocs build
-	#if [ -d site ]; then chmod -R u+w site ; fi
 
 .PHONY: docs-docker
 docs-docker:

@@ -16,7 +16,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/rocd.devices.Device"
+                    "$ref": "#/components/schemas/rocd.models.Device"
                   }
                 }
               }
@@ -45,7 +45,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/rocd.devices.Device"
+                  "$ref": "#/components/schemas/rocd.models.Device"
                 }
               }
             }
@@ -71,7 +71,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/rocd.devices.Device"
+                  "$ref": "#/components/schemas/rocd.models.Device"
                 }
               }
             }
@@ -82,7 +82,7 @@
   },
   "components": {
     "schemas": {
-      "rocd.devices.Device": {
+      "rocd.models.Device": {
         "type": "object",
         "required": [
           "uid",
@@ -100,7 +100,7 @@
             "type": "string"
           },
           "driver": {
-            "$ref": "#/components/schemas/rocd.devices.DeviceDriver"
+            "$ref": "#/components/schemas/rocd.models.DeviceDriver"
           },
           "is_hardware": {
             "type": "boolean"
@@ -112,27 +112,27 @@
             "type": "boolean"
           },
           "status": {
-            "$ref": "#/components/schemas/rocd.devices.DeviceStatus"
+            "$ref": "#/components/schemas/rocd.models.DeviceStatus"
           },
           "system_name": {
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/rocd.devices.DeviceType"
+            "$ref": "#/components/schemas/rocd.models.DeviceType"
           },
           "uid": {
             "type": "string"
           }
         }
       },
-      "rocd.devices.DeviceDriver": {
+      "rocd.models.DeviceDriver": {
         "type": "string",
         "enum": [
           "pipewire",
           "pulseaudio"
         ]
       },
-      "rocd.devices.DeviceStatus": {
+      "rocd.models.DeviceStatus": {
         "type": "string",
         "enum": [
           "disabled",
@@ -140,7 +140,7 @@
           "unavailable"
         ]
       },
-      "rocd.devices.DeviceType": {
+      "rocd.models.DeviceType": {
         "type": "string",
         "enum": [
           "sink",
