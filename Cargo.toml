@@ -5,7 +5,8 @@ edition = "2024"
 
 [dependencies.clap]
 version = "4.5"
-features = ["derive"]
+default-features = false
+features = ["std", "help", "usage", "error-context", "derive", "wrap_help"]
 
 [dependencies.regex]
 version = "1.11.1"
