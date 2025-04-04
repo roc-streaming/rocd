@@ -10,6 +10,8 @@ temp_images := \
 temp_files := \
   site/ \
   target/ \
+  openapi/openapi.json \
+  openapi/openapi.yaml \
   openapi/openapi.html
 temp_dirs_aux := \
   .cache/
@@ -55,7 +57,8 @@ $(cargo_out): $(cargo_src)
 	cargo build
 
 openapi/openapi.json: $(cargo_out)
-	cargo run -- --dump-openapi > openapi/openapi.json
+	cargo run -- --dump-openapi=json > openapi/openapi.json
+	cargo run -- --dump-openapi=yaml > openapi/openapi.yaml
 
 .PHONY: run
 run:

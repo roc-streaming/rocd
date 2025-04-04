@@ -1,5 +1,5 @@
 use crate::devices;
-use crate::models::*;
+use crate::models::Device;
 use salvo::logging::Logger;
 use salvo::oapi::extract::*;
 use salvo::prelude::*;
@@ -49,6 +49,10 @@ impl RestServer {
 
     pub fn openapi_json(&self) -> String {
         self.openapi.to_pretty_json().unwrap() + "\n"
+    }
+
+    pub fn openapi_yaml(&self) -> String {
+        self.openapi.to_yaml().unwrap()
     }
 }
 
