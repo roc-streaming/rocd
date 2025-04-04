@@ -8,7 +8,7 @@ mod rest;
 
 use crate::errors::ParseError;
 use crate::rest::RestServer;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use regex_static::static_regex;
 use std::io::{Write, stdout};
 use std::process::exit;
@@ -22,8 +22,14 @@ struct CLI {
     addr: String,
 
     /// dump OpenAPI specification in JSON format to stdout and exit
-    #[arg(long, default_value_t = false)]
-    dump_openapi: bool,
+    #[arg(long, value_enum, value_name = "FORMAT")]
+    dump_openapi: Option<OpenapiFormat>,
+}
+
+#[derive(ValueEnum, Clone, Debug)]
+enum OpenapiFormat {
+    Json,
+    Yaml,
 }
 
 #[tokio::main]
@@ -33,12 +39,22 @@ async fn main() {
     let opts = CLI::parse();
 
     let server = RestServer::new();
-    if opts.dump_openapi {
-        if let Err(_) = stdout().write_all(server.openapi_json().as_bytes()) {
-            exit(1);
-        }
-        exit(0);
-    }
+
+    match opts.dump_openapi {
+        Some(OpenapiFormat::Json) => {
+            if stdout().write_all(server.openapi_json().as_bytes()).is_err() {
+                exit(1);
+            }
+            exit(0);
+        },
+        Some(OpenapiFormat::Yaml) => {
+            if stdout().write_all(server.openapi_yaml().as_bytes()).is_err() {
+                exit(1);
+            }
+            exit(0);
+        },
+        None => (),
+    };
 
     tracing::info!("starting server with options {opts:?}");
 
