@@ -1,16 +1,22 @@
+// Copyright (c) Roc Streaming authors
+// Licensed under MPL-2.0
 use salvo::oapi::ToSchema;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
-#[derive(ToSchema, Serialize, Deserialize)]
+#[derive(ToSchema, Serialize, Deserialize, Validate)]
 pub struct Device {
     // immutable fields
     //
+    #[validate(length(min = 1))]
     pub uid: String,
+    #[validate(length(min = 1))]
     pub system_name: String,
+    #[validate(length(min = 1))]
     pub display_name: String,
 
     #[serde(rename = "type")]
-    pub type_: DeviceType,
+    pub dev_type: DeviceType,
     pub driver: DeviceDriver,
     pub is_hardware: bool,
     pub is_stream: bool,
@@ -49,5 +55,4 @@ pub enum DeviceStatus {
 #[serde(rename_all = "snake_case")]
 pub enum DeviceDriver {
     Pipewire,
-    Pulseaudio,
 }
