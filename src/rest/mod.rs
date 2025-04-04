@@ -1,3 +1,5 @@
+// Copyright (c) Roc Streaming authors
+// Licensed under MPL-2.0
 use crate::devices;
 use crate::models::Device;
 use salvo::logging::Logger;
