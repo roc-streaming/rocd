@@ -2,6 +2,7 @@
 // Licensed under MPL-2.0
 use crate::devices;
 use crate::models::Device;
+
 use salvo::logging::Logger;
 use salvo::oapi::extract::*;
 use salvo::prelude::*;

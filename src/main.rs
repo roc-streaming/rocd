@@ -1,9 +1,5 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-
-// Crate-level options (note the "!")
-#![allow(dead_code)] // TODO: remove it later
-
 mod devices;
 mod models;
 mod parse;
@@ -23,7 +19,7 @@ struct CLI {
     #[arg(short, long, value_name = "HOST:PORT", default_value = "127.0.0.1:4040")]
     addr: String,
 
-    /// dump OpenAPI specification in JSON format to stdout and exit
+    /// print openapi spec and exit
     #[arg(long, value_enum, value_name = "FORMAT")]
     dump_openapi: Option<OpenapiFormat>,
 }
