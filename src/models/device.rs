@@ -4,7 +4,7 @@ use salvo::oapi::ToSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(ToSchema, Serialize, Deserialize, Validate)]
+#[derive(Clone, PartialEq, Debug, Validate, ToSchema, Serialize, Deserialize)]
 pub struct Device {
     // immutable fields
     //
@@ -36,14 +36,14 @@ pub struct Device {
     // module_id: String,
 }
 
-#[derive(ToSchema, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DeviceType {
     Sink,
     Source,
 }
 
-#[derive(ToSchema, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DeviceStatus {
     Disabled,
@@ -51,7 +51,7 @@ pub enum DeviceStatus {
     Unavailable,
 }
 
-#[derive(ToSchema, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DeviceDriver {
     Pipewire,
