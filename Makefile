@@ -1,3 +1,7 @@
+# suppress some strange escape-codes
+TERM := xterm-color
+export TERM
+
 cargo_src := $(shell find src -type f)
 cargo_out := target/debug/rocd
 
@@ -7,14 +11,6 @@ images_svg := $(patsubst %.d2,%.svg,$(images_src))
 pwd := $(shell pwd)
 uid := $(shell id -u)
 gid := $(shell id -g)
-
-# XXX: update after stabilization
-unstable_rustfmt_opts := \
-  --config unstable_features=true \
-  --config imports_granularity=Module \
-  --config normalize_doc_attributes=true \
-  --config comment_width=100
-#  --config struct_field_align_threshold=30
 
 
 default: all
@@ -44,7 +40,7 @@ help:
 #---------- build/run/test ----------#
 
 .PHONY: all
-all: build lint
+all: build lint test
 
 .PHONY: build
 build: $(cargo_out) openapi/openapi.json
@@ -56,18 +52,26 @@ openapi/openapi.json: $(cargo_out)
 	cargo run -- --dump-openapi=json > openapi/openapi.json
 	cargo run -- --dump-openapi=yaml > openapi/openapi.yaml
 
+.PHONY: lint
+lint: build
+	cargo clippy
+	cargo fmt -- --check
+
+.PHONY: test
+test: build
+	cargo test
+
 .PHONY: run
 run:
 	cargo run
 
 .PHONY: fmt
 fmt:
-	cargo fmt -- $(unstable_rustfmt_opts)
-
-.PHONY: lint
-lint:
-	cargo clippy
-	cargo fmt --check -- $(unstable_rustfmt_opts)
+	cargo fmt -- \
+	  --config unstable_features=true \
+	  --config imports_granularity=Module \
+	  --config normalize_doc_attributes=true \
+	  --config comment_width=95
 
 #---------- documentation ----------#
 

@@ -2,7 +2,7 @@
 
 edition = "2024"
 
-max_width = 100 # line length
+max_width = 95 # line length
 
 # TODO: consider switching to "Off"
 use_small_heuristics = "Max" # bulk updates of `*_width` settings (except `comment_width`)
