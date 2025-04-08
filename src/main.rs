@@ -68,7 +68,7 @@ async fn main() {
         },
     };
 
-    if let Err(err) = server.serve(&host, port).await {
+    if let Err(err) = server.serve(host, port).await {
         tracing::error!("http server failed: {err}");
         exit(1);
     }

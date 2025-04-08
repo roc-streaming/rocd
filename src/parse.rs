@@ -28,7 +28,7 @@ pub fn parse_addr(hs: &str) -> Result<(&str, u16), ParseError> {
         },
     };
 
-    let port = match u16::from_str(&port_str) {
+    let port = match u16::from_str(port_str) {
         Ok(n) => n,
         Err(err) => return Err(ParseError::from_msg(format!("bad port: {err}"))),
     };
