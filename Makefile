@@ -4,18 +4,6 @@ cargo_out := target/debug/rocd
 images_src := $(wildcard docs/assets/dia/*.d2)
 images_svg := $(patsubst %.d2,%.svg,$(images_src))
 
-temp_images := \
-  docs/assets/dia/*.png \
-  docs/assets/dia/*.svg
-temp_files := \
-  site/ \
-  target/ \
-  openapi/openapi.json \
-  openapi/openapi.yaml \
-  openapi/openapi.html
-temp_dirs_aux := \
-  .cache/
-
 pwd := $(shell pwd)
 uid := $(shell id -u)
 gid := $(shell id -g)
@@ -29,12 +17,13 @@ unstable_rustfmt_opts := \
 #  --config struct_field_align_threshold=30
 
 
-default: help
+default: all
 
 .PHONY: help
 help:
 	@echo >&2 "Primary targets:"
 	@echo >&2
+	@echo >&2 "  all   - build rocd and run linters"
 	@echo >&2 "  build - build rocd"
 	@echo >&2 "  run   - (build and) run rocd"
 	@echo >&2 "  docs  - build docs"
@@ -43,12 +32,19 @@ help:
 	@echo >&2 "Auxiliary targets:"
 	@echo >&2
 	@echo >&2 "  docs-diagrams  - generate diagrams"
+	@echo >&2 "  docs-docker    - build docs (for CI and locally without deps installation)"
+	@echo >&2 "  docs-openapi   - bundle openapi.json into openapi.html"
 	@echo >&2 "  docs-serve     - run mkdocs web-server with monitoring file changes"
+	@echo >&2 "  docs-site      - build docs for site (using mkdocs)"
 	@echo >&2 "  clean-diagrams - remove generated diagrams"
 	@echo >&2 "  clean-all      - remove all temporary files (binaries, docs, LSP caches, ...)"
 	@echo >&2 "  fmt            - format the source code (may use some unstable features!)"
+	@echo >&2 "  lint           - run static Rust analyser and dry-run formatter"
 
 #---------- build/run/test ----------#
+
+.PHONY: all
+all: build lint
 
 .PHONY: build
 build: $(cargo_out) openapi/openapi.json
@@ -68,11 +64,15 @@ run:
 fmt:
 	cargo fmt -- $(unstable_rustfmt_opts)
 
+.PHONY: lint
+lint:
+	cargo clippy
+	cargo fmt --check -- $(unstable_rustfmt_opts)
+
 #---------- documentation ----------#
 
 .PHONY: docs
 docs: docs-diagrams docs-site docs-openapi
-	mkdocs build
 
 .PHONY: docs-docker
 docs-docker:
@@ -116,12 +116,20 @@ docs-openapi:
 
 .PHONY: clean
 clean:
-	rm -rf $(temp_files)
+	rm -rf \
+	  site/ \
+	  target/
+	rm -f \
+	  openapi/openapi.json \
+	  openapi/openapi.yaml \
+	  openapi/openapi.html
 
 .PHONY: clean-diagrams
 clean-diagrams:
-	rm -f $(temp_images)
+	rm -f \
+	  docs/assets/dia/*.png \
+	  docs/assets/dia/*.svg
 
 .PHONY: clean-all
 clean-all: clean
-	rm -rf $(temp_dirs_aux)
+	rm -rf .cache/

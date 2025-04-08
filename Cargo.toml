@@ -3,6 +3,11 @@ name = "rocd"
 version = "0.1.0"
 edition = "2024"
 
+[lints.clippy]
+upper_case_acronyms = "allow" # like "CLI" instead of "Cli"
+
+# deps
+
 [dependencies]
 derive_builder = "0.20.2"
 quick_cache = "0.6.12"
