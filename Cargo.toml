@@ -10,7 +10,7 @@ upper_case_acronyms = "allow" # like "CLI" instead of "Cli"
 
 [dependencies]
 derive_builder = "0.20.2"
-quick_cache = "0.6.12"
+quick_cache = "0.6.13"
 thiserror = "2.0.12"
 validator = { version = "0.20.0", features = ["derive"] }
 
