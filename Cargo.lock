@@ -2004,9 +2004,9 @@ dependencies = [
 
 [[package]]
 name = "salvo-craft-macros"
-version = "0.77.1"
+version = "0.78.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dae493404f8ae190cb47c526663aad2ddfe00640b4b4b8ec355c0bb832028b83"
+checksum = "7334fddd742e7623e2c1001c21bddf2caa1aa5298aa8157c870b8379959cadc4"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
