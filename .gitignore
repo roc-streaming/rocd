@@ -1,19 +1,14 @@
-/.cache/
+# build
+/target/
 /site/
 /openapi/openapi.html
+.doit.*
 
-# cargo
-/target/
+# editors
+*.sw[nop]
+.dir-config.el
+/.cache/
+/tags
 
 # personal
 /TODO.org
-
-## general
-
-# vim
-*.sw[nop]
-# universal ctags
-/tags
-
-# emacs
-.dir-config.el

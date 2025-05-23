@@ -37,12 +37,12 @@ jobs:
 
       - name: Build
         run: |
-          make build
+          cargo build
 
       - name: Lint
         run: |
-          make lint
+          cargo clippy
 
       - name: Test
         run: |
-          make test
+          cargo test
