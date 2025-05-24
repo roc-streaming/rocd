@@ -29,7 +29,7 @@ docker_run = [
     '-v', f'{os.getcwd()}:{os.getcwd()}',
     '-w', os.getcwd(),
 ]
-if os.name == 'posix':
+if os.name == 'posix' and not os.environ.get('CI'):
     docker_run += [
         '-u', f'{os.getuid()}:{os.getgid()}',
     ]
