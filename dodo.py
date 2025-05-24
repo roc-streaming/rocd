@@ -76,7 +76,7 @@ def task_build():
     return {
         'basename': 'build',
         'actions': [],
-        'task_dep': ['build_exe', 'build_spec'],
+        'task_dep': ['build_exe', 'gen_spec', 'gen_client'],
         'title': _color_title,
     }
 
@@ -87,22 +87,40 @@ def task_build_exe():
         'basename': 'build_exe',
         'actions': [
             Interactive(
-                'cargo build',
+                'cargo build --workspace',
                 env={**os.environ, **{'RUSTFLAGS': '--deny warnings'}}),
         ],
         'title': _color_title,
     }
 
-# doit build_spec
-def task_build_spec():
+# doit gen_spec
+def task_gen_spec():
     """build openapi spec"""
     return {
-        'basename': 'build_spec',
+        'basename': 'gen_spec',
         'actions': [
-            Interactive('cargo run -- --dump-openapi=json > openapi/openapi.json'),
-            Interactive('cargo run -- --dump-openapi=yaml > openapi/openapi.yaml'),
+            Interactive(
+                'cargo run -p util --bin codegen -- --openapi=json > openapi/openapi.json'
+            ),
+            Interactive(
+                'cargo run -p util --bin codegen -- --openapi=yaml > openapi/openapi.yaml'
+            ),
         ],
         'task_dep': ['build_exe'],
+        'title': _color_title,
+    }
+
+# doit gen_spec
+def task_gen_client():
+    """build openapi spec"""
+    return {
+        'basename': 'gen_client',
+        'actions': [
+            Interactive(
+                'cargo run -p util --bin codegen -- --client > tests/rest_client/mod.rs'
+            ),
+        ],
+        'task_dep': ['gen_spec'],
         'title': _color_title,
     }
 

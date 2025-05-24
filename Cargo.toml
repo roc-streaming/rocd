@@ -1,14 +1,27 @@
+[workspace]
+members = ["util"]
+
 [package]
 name = "rocd"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "rocd"
+path = "src/lib.rs"
+doctest = false
+
+[[bin]]
+name = "rocd"
+path = "src/main.rs"
+test = false
+
 [lints.rust]
 dead_code = "allow"
 
 [lints.clippy]
-# https://rust-lang.github.io/rust-clippy/
 let_and_return = "allow"
+new_without_default = "allow"
 redundant_closure = "allow"
 upper_case_acronyms = "allow"
 
@@ -16,8 +29,14 @@ upper_case_acronyms = "allow"
 assertables = "9.5.1"
 ctor = "0.4.1"
 procspawn = "1.0.1"
+progenitor-client = "0.10.0"
+reqwest = "0.12.15"
 tempfile = "3.19.1"
 tracing-test = "0.2.5"
+
+[dependencies.reqwest]
+version = "0.12.15"
+features = ["json", "stream"]
 
 [dependencies]
 derive_builder = "0.20.2"
@@ -27,32 +46,32 @@ regex = "1.11.1"
 regex_static = "0.1.1"
 rmp-serde = "1.3.0"
 thiserror = "2.0.12"
-tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
 
 [dependencies.clap]
-version = "4.5"
+version = "4.5.32"
 default-features = false
 features = ["std", "help", "usage", "error-context", "derive", "wrap_help"]
 
 [dependencies.salvo]
-version = "0.78"
+version = "0.78.0"
 features = ["logging", "oapi"]
 
 [dependencies.salvo-craft-macros]
 version = "0.78.0"
 
 [dependencies.serde]
-version = "1.0"
+version = "1.0.219"
 features = ["derive"]
 
 [dependencies.serde_json]
-version = "1.0"
-
-[dependencies.tokio]
-version = "1"
-features = ["full"]
+version = "1.0.140"
 
 [dependencies.validator]
 version = "0.20.0"
 features = ["derive"]
+
+[dependencies.tokio]
+version = "1.44.2"
+features = ["full"]
