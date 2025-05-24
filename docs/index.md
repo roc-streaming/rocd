@@ -54,13 +54,13 @@
 
 !!! info
 
-    Platforms marked with :construction: are not supported yet. See [roadmap](./roadmap.md) for status.
+    Platforms marked with :construction: are not supported yet. See [Platform support](./usage/platforms.md) for status.
 
 `rocd` aims to support the following platforms:
 
-- **Desktop** — Computers with a display, sound card, and local apps doing audio I/O. Can be :white_check_mark: `Linux`, :white_check_mark: `macOS`, or :construction: `Windows` ^[roadmap](./roadmap.md#windows)^.
+- **Desktop** — Computers with a display, sound card, and local apps doing audio I/O. Can be :white_check_mark: `Linux`, :white_check_mark: `macOS`, or :construction: `Windows` ^[status](./usage/platforms.md)^.
 
-- **Mobile devices** — :white_check_mark: `Android` and :construction: `iOS` ^[roadmap](./roadmap.md#ios)^.
+- **Mobile devices** — :white_check_mark: `Android` and :construction: `iOS` ^[status](./usage/platforms.md)^.
 
     For mobile platforms, we ship `rocd` as an *embeddable service* wrapped into platform-native library (Kotlin or Swift). When you integrate this library into your app, it becomes a full-featured `rocd` instance.
 
@@ -70,7 +70,7 @@
 
 ## Use cases
 
-*TBD*
+*TODO*
 
 ## Applications
 

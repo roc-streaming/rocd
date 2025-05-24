@@ -1,15 +1,25 @@
-# Dev dependencies
+# Developer setup
+
+## Build tools
+
+*TODO*
 
 ## Documentation tools
 
-### Pre-built docker image
+### Docker image
 
-There is a [docker image](https://hub.docker.com/repository/docker/rocstreaming/env-sphinx) that has all tools listed below pre-installed. It is built and published automatically with [github actions](https://github.com/roc-streaming/dockerfiles).
+There is a [docker image](https://hub.docker.com/repository/docker/rocstreaming/env-docs) that has all tools listed below pre-installed. It is built and published automatically with [github actions](https://github.com/roc-streaming/dockerfiles).
 
-Makefile can automatically pull the image and run documentation build inside container:
+This script will automatically pull the image and build documentation in container:
 
 ```
-make docs-docker
+./script/generate_docs.py build
+```
+
+It can also start preview server on localhost with automatic rebuild on change:
+
+```
+./script/generate_docs.py serve
 ```
 
 ### Manual install

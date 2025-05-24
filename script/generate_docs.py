@@ -60,7 +60,7 @@ elif sys.argv[1] == 'serve':
         ]
         print_cmd(run_cmd)
         while True:
-            file_list = []
+            file_list = ['mkdocs.yml']
             for root, dirs, files in os.walk('docs'):
                 for path in files:
                     file_list.append(os.path.join(root, path))

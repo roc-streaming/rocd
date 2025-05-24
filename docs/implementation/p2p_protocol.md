@@ -1,3 +1,3 @@
 # P2P protocol
 
-*TBD*
+*TODO*

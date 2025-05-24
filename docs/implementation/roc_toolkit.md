@@ -64,4 +64,4 @@ To proceed with `rocd` development more quickly and independently from the Roc T
 
 3. When `roc_transceiver` is implemented in Roc Toolkit, we'll switch `rocd` to that new API, effectively delegating all real-time I/O and processing to it.
 
-See also [roadmap](../roadmap.md) for current status.
+See also [Platform support](../usage/platforms.md) for current status.

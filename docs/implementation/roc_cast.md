@@ -4,7 +4,7 @@
 
 !!! warning
 
-    Roc Cast is still under development. It will gradually evolve from [Roc Droid](https://github.com/roc-streaming/roc-droid) after its migrating it to Flutter See [this issue](https://github.com/roc-streaming/roc-droid/issues/94) for status.
+    Roc Cast is still under development. It will gradually evolve from [Roc Droid](https://github.com/roc-streaming/roc-droid).
 
 [Roc Cast](https://github.com/roc-streaming/roc-cast) is an end-user solution for connecting audio apps and devices on a home or office network. 
 
