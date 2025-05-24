@@ -1,20 +1,22 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-mod devices;
-mod models;
-mod parse;
-mod rest;
+mod dto;
+mod io_port;
+mod io_stream;
+mod rest_api;
 mod storage;
 
-use crate::parse::parse_addr;
-use crate::rest::RestServer;
+use crate::io_port::PortDispatcher;
+use crate::io_stream::StreamDispatcher;
+use crate::rest_api::RestServer;
 use clap::{Parser, ValueEnum};
 use std::io::{Write, stdout};
 use std::process::exit;
+use std::sync::Arc;
 
 #[derive(Parser, Debug)]
 #[command(about = "rocd server")]
-struct CLI {
+struct CliArgs {
     /// host:port to run http server at
     #[arg(short, long, value_name = "HOST:PORT", default_value = "127.0.0.1:4040")]
     addr: String,
@@ -34,11 +36,13 @@ enum OpenapiFormat {
 async fn main() {
     tracing_subscriber::fmt().init();
 
-    let opts = CLI::parse();
+    let args = CliArgs::parse();
 
-    let server = RestServer::new();
+    let port_dispatcher = Arc::new(PortDispatcher::new());
+    let stream_dispatcher = Arc::new(StreamDispatcher::new());
+    let server = RestServer::new(port_dispatcher, stream_dispatcher);
 
-    match opts.dump_openapi {
+    match args.dump_openapi {
         Some(OpenapiFormat::Json) => {
             if stdout().write_all(server.openapi_json().as_bytes()).is_err() {
                 exit(1);
@@ -54,9 +58,9 @@ async fn main() {
         None => (),
     };
 
-    tracing::info!("starting server with options {opts:?}");
+    tracing::info!("starting server with options {args:?}");
 
-    let (host, port) = match parse_addr(&opts.addr) {
+    let (host, port) = match rest_api::parse_addr(&args.addr) {
         Ok((host, port)) => (host, port),
         Err(err) => {
             tracing::error!("invalid --addr: {err}");

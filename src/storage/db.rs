@@ -28,7 +28,7 @@ pub type Table = TableDefinition<
     &'static [u8],
 >;
 
-pub const DEVICE_TABLE: Table = TableDefinition::new("devices");
+pub const PORT_TABLE: Table = TableDefinition::new("ports");
 
 #[derive(Debug)]
 pub struct Db {

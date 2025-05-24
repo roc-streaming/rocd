@@ -5,7 +5,7 @@ mod error;
 #[cfg(test)]
 mod tests;
 
-use crate::models::Device;
+use crate::dto::PortDescriptor;
 use crate::storage::db::{Db, Table};
 pub use crate::storage::error::StorageError;
 
@@ -71,7 +71,7 @@ pub struct StorageMetrics {
 pub struct Storage {
     db: Arc<Db>,
     write_lock: Mutex<()>,
-    device_cache: RwLock<MemCache<Device>>,
+    port_cache: RwLock<MemCache<PortDescriptor>>,
     // metrics
     cache_hits: AtomicU64,
     cache_misses: AtomicU64,
@@ -103,7 +103,7 @@ impl Storage {
         Ok(Storage {
             db,
             write_lock: Mutex::new(()),
-            device_cache: RwLock::new(MemCache {
+            port_cache: RwLock::new(MemCache {
                 kvmap: Cache::new(config.cache_size),
                 kset: None,
             }),
@@ -119,7 +119,7 @@ impl Storage {
         let db_metrics = self.db.metrics();
 
         let mut cache_size = 0;
-        for cache in [&self.device_cache] {
+        for cache in [&self.port_cache] {
             let rlocked_cache = cache.read().await;
             cache_size += rlocked_cache.kvmap.len();
         }
@@ -135,42 +135,42 @@ impl Storage {
         }
     }
 
-    /// List all device UIDs.
+    /// List all port UIDs.
     /// First call will read the list from DB, subsequent calls will
     /// return value from memory.
-    pub async fn list_devices(&self) -> Result<Arc<HashSet<String>>> {
-        self.list_imp(db::DEVICE_TABLE, &self.device_cache).await
+    pub async fn list_ports(&self) -> Result<Arc<HashSet<String>>> {
+        self.list_imp(db::PORT_TABLE, &self.port_cache).await
     }
 
-    /// Read device by UID.
+    /// Read port by UID.
     /// Returns value from in-memory cache if present, otherwise
     /// reads from DB and updates cache.
-    pub async fn read_device(&self, uid: &str) -> Result<Arc<Device>> {
+    pub async fn read_port(&self, uid: &str) -> Result<Arc<PortDescriptor>> {
         if uid.is_empty() {
             return Err(StorageError::InvalidArgument("empty uid"));
         }
-        self.read_imp(db::DEVICE_TABLE, &self.device_cache, uid).await
+        self.read_imp(db::PORT_TABLE, &self.port_cache, uid).await
     }
 
-    /// Write device.
+    /// Write port.
     /// Updates both in-memory cache and DB.
     /// Blocks until DB transaction is completed.
-    pub async fn write_device(&self, device: &Arc<Device>) -> Result<()> {
-        if device.uid.is_empty() {
-            return Err(StorageError::InvalidArgument("empty device.uid"));
+    pub async fn write_port(&self, port: &Arc<PortDescriptor>) -> Result<()> {
+        if port.uid.is_empty() {
+            return Err(StorageError::InvalidArgument("empty port.uid"));
         }
-        device.validate()?;
-        self.write_imp(db::DEVICE_TABLE, &self.device_cache, &device.uid, device).await
+        port.validate()?;
+        self.write_imp(db::PORT_TABLE, &self.port_cache, &port.uid, port).await
     }
 
-    /// Remove device.
+    /// Remove port.
     /// Updates both in-memory cache and DB.
     /// Blocks until DB transaction is completed.
-    pub async fn remove_device(&self, uid: &str) -> Result<()> {
+    pub async fn remove_port(&self, uid: &str) -> Result<()> {
         if uid.is_empty() {
             return Err(StorageError::InvalidArgument("empty uid"));
         }
-        self.remove_imp(db::DEVICE_TABLE, &self.device_cache, uid).await
+        self.remove_imp(db::PORT_TABLE, &self.port_cache, uid).await
     }
 
     /// Generic list implementation.

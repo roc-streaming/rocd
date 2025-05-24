@@ -3,9 +3,9 @@ info:
   title: rocd REST API
   version: 0.1.0
 paths:
-  /devices:
+  /peers/self/self/ports:
     get:
-      operationId: list_devices
+      operationId: list_ports
       responses:
         '200':
           description: Response with json format data
@@ -14,10 +14,10 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/rocd.models.device.Device'
-  /devices/{uid}:
+                  $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDescriptor'
+  /peers/self/self/ports/{uid}:
     get:
-      operationId: read_device
+      operationId: read_port
       parameters:
       - name: uid
         in: path
@@ -31,9 +31,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rocd.models.device.Device'
+                $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDescriptor'
     put:
-      operationId: update_device
+      operationId: update_port
       parameters:
       - name: uid
         in: path
@@ -47,52 +47,43 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rocd.models.device.Device'
+                $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDescriptor'
 components:
   schemas:
-    rocd.models.device.Device:
+    rocd.dto.port_descriptor.PortDescriptor:
       type: object
       required:
+      - port_type
+      - port_direction
+      - port_driver
       - uid
-      - system_name
       - display_name
-      - type
-      - driver
-      - is_hardware
-      - is_stream
-      - status
-      - is_muted
+      - system_name
       properties:
         display_name:
           type: string
-        driver:
-          $ref: '#/components/schemas/rocd.models.device.DeviceDriver'
-        is_hardware:
-          type: boolean
-        is_muted:
-          type: boolean
-        is_stream:
-          type: boolean
-        status:
-          $ref: '#/components/schemas/rocd.models.device.DeviceStatus'
+        port_direction:
+          $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDirection'
+        port_driver:
+          $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDriver'
+        port_type:
+          $ref: '#/components/schemas/rocd.dto.port_descriptor.PortType'
         system_name:
           type: string
-        type:
-          $ref: '#/components/schemas/rocd.models.device.DeviceType'
         uid:
           type: string
-    rocd.models.device.DeviceDriver:
+    rocd.dto.port_descriptor.PortDirection:
+      type: string
+      enum:
+      - input
+      - output
+      - duplex
+    rocd.dto.port_descriptor.PortDriver:
       type: string
       enum:
       - pipewire
-    rocd.models.device.DeviceStatus:
+    rocd.dto.port_descriptor.PortType:
       type: string
       enum:
-      - disabled
-      - enabled
-      - unavailable
-    rocd.models.device.DeviceType:
-      type: string
-      enum:
-      - sink
-      - source
+      - system_device
+      - streaming_device
