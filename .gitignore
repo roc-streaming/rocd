@@ -3,6 +3,8 @@
 /site/
 /openapi/openapi.html
 .doit.*
+__pycache__
+*.pyc
 
 # editors
 *.sw[nop]

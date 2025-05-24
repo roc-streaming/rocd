@@ -1,7 +1,7 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-mod port_descriptor;
-mod stream_descriptor;
+mod endpoint_spec;
+mod stream_spec;
 
-pub use self::port_descriptor::*;
-pub use self::stream_descriptor::*;
+pub use self::endpoint_spec::*;
+pub use self::stream_spec::*;

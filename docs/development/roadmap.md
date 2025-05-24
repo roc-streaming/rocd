@@ -9,7 +9,7 @@
     - OpenAPI (Swagger)
     - CLI, logging
 - :white_large_square: **Integration tests skeleton** ([gh-49][gh-49])
-    - driver mock + storage + port and stream dispatchers + rest api server
+    - driver mock + vault + endpoint and stream dispatchers + rest api server
     - swagger-generated client
     - send requests via client and check how driver mock behaves
 - :white_check_mark: **Persistent storage** ([gh-32][gh-32])
@@ -17,18 +17,19 @@
 - :white_large_square: **DeviceDriver and PipewireDriver** ([gh-50][gh-50])
     - generic driver interface
     - implementation for PipeWire using C bindings to libpipewire
-- :white_large_square: **Port management** ([gh-46][gh-46])
-    - CRUD for io ports (audio devices)
+- :white_large_square: **Endpoint management** ([gh-46][gh-46])
+    - CRUD io for endpoints (audio devices)
     - uses DeviceDriver to control devices
 - :white_large_square: **Stream management** ([gh-47][gh-47])
     - CRUD for network streams
     - uses DeviceDriver for I/O
-    - support sending from port to address
-    - support receiving from address to port
-    - for now don't support port-to-port
+    - support sending from endpoint to address
+    - support receiving from address to endpoint
+    - for now don't support endpoint-to-endpoint
 - :white_large_square: **Event subscription** ([gh-48][gh-48])
     - REST API to subscribe to events
-    - integrate with PortDispatcher and StreamDispatcher
+    - add EventDispatcher
+    - integrate with EndpointDispatcher and StreamDispatcher
 
 [gh-15]: https://github.com/roc-streaming/rocd/issues/15
 [gh-16]: https://github.com/roc-streaming/rocd/issues/16
@@ -49,7 +50,7 @@
     - auto-discovery
     - REST API for /peers
 - :white_large_square: **Cross-peer streams**
-    - support streams connecting ports on different peers
+    - support streams connecting endpoints on different peers
 
 ## Prototype Stage III (Extras)
 

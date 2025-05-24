@@ -3,9 +3,9 @@ info:
   title: rocd REST API
   version: 0.1.0
 paths:
-  /peers/self/self/ports:
+  /peers/self/self/endpoints:
     get:
-      operationId: list_ports
+      operationId: list_endpoints
       responses:
         '200':
           description: Response with json format data
@@ -14,10 +14,10 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDescriptor'
-  /peers/self/self/ports/{uid}:
+                  $ref: '#/components/schemas/rocd.dto.endpoint_spec.EndpointSpec'
+  /peers/self/self/endpoints/{uid}:
     get:
-      operationId: read_port
+      operationId: read_endpoint
       parameters:
       - name: uid
         in: path
@@ -31,9 +31,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDescriptor'
+                $ref: '#/components/schemas/rocd.dto.endpoint_spec.EndpointSpec'
     put:
-      operationId: update_port
+      operationId: update_endpoint
       parameters:
       - name: uid
         in: path
@@ -47,42 +47,45 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDescriptor'
+                $ref: '#/components/schemas/rocd.dto.endpoint_spec.EndpointSpec'
 components:
   schemas:
-    rocd.dto.port_descriptor.PortDescriptor:
-      type: object
-      required:
-      - port_type
-      - port_direction
-      - port_driver
-      - uid
-      - display_name
-      - system_name
-      properties:
-        display_name:
-          type: string
-        port_direction:
-          $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDirection'
-        port_driver:
-          $ref: '#/components/schemas/rocd.dto.port_descriptor.PortDriver'
-        port_type:
-          $ref: '#/components/schemas/rocd.dto.port_descriptor.PortType'
-        system_name:
-          type: string
-        uid:
-          type: string
-    rocd.dto.port_descriptor.PortDirection:
+    rocd.dto.endpoint_spec.EndpointDir:
       type: string
       enum:
       - input
       - output
       - duplex
-    rocd.dto.port_descriptor.PortDriver:
+    rocd.dto.endpoint_spec.EndpointDriver:
       type: string
       enum:
       - pipewire
-    rocd.dto.port_descriptor.PortType:
+    rocd.dto.endpoint_spec.EndpointSpec:
+      type: object
+      required:
+      - endpoint_uuid
+      - endpoint_type
+      - stream_direction
+      - driver
+      - display_name
+      - system_name
+      properties:
+        display_name:
+          type: string
+          description: Human-readable name.
+        driver:
+          $ref: '#/components/schemas/rocd.dto.endpoint_spec.EndpointDriver'
+        endpoint_type:
+          $ref: '#/components/schemas/rocd.dto.endpoint_spec.EndpointType'
+        endpoint_uuid:
+          type: string
+          description: Globally unique endpoint identifier.
+        stream_direction:
+          $ref: '#/components/schemas/rocd.dto.endpoint_spec.EndpointDir'
+        system_name:
+          type: string
+          description: OS name (if any).
+    rocd.dto.endpoint_spec.EndpointType:
       type: string
       enum:
       - system_device

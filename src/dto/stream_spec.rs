@@ -5,46 +5,49 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 #[derive(Clone, PartialEq, Debug, Validate, ToSchema, Serialize, Deserialize)]
-pub struct StreamDescriptor {
+pub struct StreamSpec {
+    /// Globally unique stream identifier.
     #[validate(length(min = 1))]
-    pub uid: String,
+    pub stream_uuid: String,
 
+    /// From where this stream reads audio.
     #[validate(length(min = 1))]
-    pub sources: Vec<StreamEndpointDescriptor>,
+    pub sources: Vec<StreamAnchorSpec>,
 
+    /// To where this stream writes audio.
     #[validate(length(min = 1))]
-    pub destinations: Vec<StreamEndpointDescriptor>,
+    pub destinations: Vec<StreamAnchorSpec>,
 }
 
 #[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum StreamEndpointType {
-    Port,
-    Addr,
+pub enum StreamAnchorType {
+    Endpoint,
+    Address,
 }
 
 #[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum StreamEndpointDescriptor {
-    Port(PortEndpointDescriptor),
-    Addr(AddrEndpointDescriptor),
+pub enum StreamAnchorSpec {
+    Endpoint(EndpointAnchorSpec),
+    Address(AddressAnchorSpec),
 }
 
 #[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
-pub struct PortEndpointDescriptor {
+pub struct EndpointAnchorSpec {
     #[serde(rename = "type")]
-    pub endpoint_type: StreamEndpointType,
+    pub anchor_type: StreamAnchorType,
 
-    pub peer_uid: String,
-    pub port_uid: String,
+    pub peer_uuid: String,
+    pub endpoint_uuid: String,
 }
 
 #[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
-pub struct AddrEndpointDescriptor {
+pub struct AddressAnchorSpec {
     #[serde(rename = "type")]
-    pub endpoint_type: StreamEndpointType,
+    pub anchor_type: StreamAnchorType,
 
-    pub audio_source: String,
-    pub audio_repair: String,
-    pub audio_control: String,
+    pub source_uri: String,
+    pub repair_uri: String,
+    pub control_uri: String,
 }

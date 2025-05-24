@@ -1,12 +1,12 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
 mod dto;
-mod io_port;
+mod io_endpoint;
 mod io_stream;
 mod rest_api;
-mod storage;
+mod vault;
 
-use crate::io_port::PortDispatcher;
+use crate::io_endpoint::EndpointDispatcher;
 use crate::io_stream::StreamDispatcher;
 use crate::rest_api::RestServer;
 use clap::{Parser, ValueEnum};
@@ -38,9 +38,9 @@ async fn main() {
 
     let args = CliArgs::parse();
 
-    let port_dispatcher = Arc::new(PortDispatcher::new());
+    let endpoint_dispatcher = Arc::new(EndpointDispatcher::new());
     let stream_dispatcher = Arc::new(StreamDispatcher::new());
-    let server = RestServer::new(port_dispatcher, stream_dispatcher);
+    let server = RestServer::new(endpoint_dispatcher, stream_dispatcher);
 
     match args.dump_openapi {
         Some(OpenapiFormat::Json) => {

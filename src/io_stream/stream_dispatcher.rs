@@ -11,11 +11,11 @@ impl StreamDispatcher {
         StreamDispatcher {}
     }
 
-    pub async fn get_all(&self) -> Vec<StreamDescriptor> {
+    pub async fn get_all(&self) -> Vec<StreamSpec> {
         vec![self.get_stream("11-22-33").await]
     }
 
-    pub async fn get_stream(&self, uid: &str) -> StreamDescriptor {
-        StreamDescriptor { uid: uid.into(), sources: vec![], destinations: vec![] }
+    pub async fn get_stream(&self, uid: &str) -> StreamSpec {
+        StreamSpec { stream_uuid: uid.into(), sources: vec![], destinations: vec![] }
     }
 }

@@ -1,6 +1,6 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-use crate::storage::error::StorageError;
+use crate::vault::error::VaultError;
 
 use redb::{Database, TableDefinition, TableHandle};
 use serde::Serialize;
@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::task;
 
-pub type Result<T> = result::Result<T, StorageError>;
+pub type Result<T> = result::Result<T, VaultError>;
 
 pub type Table = TableDefinition<
     // Liftetime of table name. Out TableDefinitions are static
@@ -28,7 +28,7 @@ pub type Table = TableDefinition<
     &'static [u8],
 >;
 
-pub const PORT_TABLE: Table = TableDefinition::new("ports");
+pub const ENDPOINT_TABLE: Table = TableDefinition::new("endpoints");
 
 #[derive(Debug)]
 pub struct Db {
@@ -52,7 +52,7 @@ pub struct DbMetrics {
     pub write_ops: u64,
 }
 
-/// Thread-safe key-value database.
+/// Thread-safe key-value vault.
 ///
 /// Uses `redb` for storage and `rmp_serde` (messagepack) for serialization.
 /// Implements async interface on top of `redb`, invokes blocking I/O operations
@@ -106,16 +106,16 @@ impl Db {
                     Err(redb::TableError::TableDoesNotExist(_)) => {
                         return Ok(Arc::new(HashSet::new()));
                     },
-                    Err(err) => return Err(StorageError::from(err)),
+                    Err(err) => return Err(VaultError::from(err)),
                 };
 
                 let iter =
-                    table.range::<&str>(..).map_err(|err| StorageError::ReadError(err))?;
+                    table.range::<&str>(..).map_err(|err| VaultError::ReadError(err))?;
 
                 let uids = iter
                     .map(|elem| -> Result<String> {
                         let (key_guard, _value_guard) =
-                            elem.map_err(|err| StorageError::ReadError(err))?;
+                            elem.map_err(|err| VaultError::ReadError(err))?;
                         Ok(key_guard.value().to_string())
                     })
                     .collect::<Result<HashSet<String>>>()?;
@@ -160,16 +160,16 @@ impl Db {
                 let table = match transaction.open_table(table_definition) {
                     Ok(table) => table,
                     Err(redb::TableError::TableDoesNotExist(_)) => {
-                        return Err(StorageError::UidNotFound(uid));
+                        return Err(VaultError::UidNotFound(uid));
                     },
-                    Err(err) => return Err(StorageError::from(err)),
+                    Err(err) => return Err(VaultError::from(err)),
                 };
 
                 // read bytes from db
                 let db_value = match table.get(uid.as_str()) {
                     Ok(Some(value)) => value,
-                    Ok(None) => return Err(StorageError::UidNotFound(uid)),
-                    Err(err) => return Err(StorageError::ReadError(err)),
+                    Ok(None) => return Err(VaultError::UidNotFound(uid)),
+                    Err(err) => return Err(VaultError::ReadError(err)),
                 };
 
                 // deserialize from bytes with messagepack
@@ -226,7 +226,7 @@ impl Db {
                     // write bytes to db
                     table
                         .insert(uid.as_str(), &buffer[..])
-                        .map_err(|err| StorageError::WriteError(err))?;
+                        .map_err(|err| VaultError::WriteError(err))?;
                 }
 
                 transaction.commit()?;
@@ -267,8 +267,8 @@ impl Db {
                     // delete value from db
                     match table.remove(uid.as_str()) {
                         Ok(Some(_)) => (),
-                        Ok(None) => return Err(StorageError::UidNotFound(uid)),
-                        Err(err) => return Err(StorageError::WriteError(err)),
+                        Ok(None) => return Err(VaultError::UidNotFound(uid)),
+                        Err(err) => return Err(VaultError::WriteError(err)),
                     };
                 }
 

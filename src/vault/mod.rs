@@ -5,9 +5,9 @@ mod error;
 #[cfg(test)]
 mod tests;
 
-use crate::dto::PortDescriptor;
-use crate::storage::db::{Db, Table};
-pub use crate::storage::error::StorageError;
+use crate::dto::EndpointSpec;
+use crate::vault::db::{Db, Table};
+pub use crate::vault::error::VaultError;
 
 use derive_builder::Builder;
 use quick_cache::sync::Cache;
@@ -21,12 +21,12 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::{Mutex, RwLock};
 use validator::Validate;
 
-pub type Result<T> = result::Result<T, StorageError>;
+pub type Result<T> = result::Result<T, VaultError>;
 
 /// Persistent storage config.
 #[derive(Builder, Default, Validate, Debug)]
 #[builder(setter(into))]
-pub struct StorageConfig {
+pub struct VaultConfig {
     /// DB file path.
     /// Directory should exist, file is auto-created.
     #[validate(length(min = 1))]
@@ -40,7 +40,7 @@ pub struct StorageConfig {
 
 /// Persistent storage metrics.
 #[derive(PartialEq, Debug)]
-pub struct StorageMetrics {
+pub struct VaultMetrics {
     /// Total count of entries cached in memory currently.
     pub cache_size: usize,
 
@@ -59,19 +59,19 @@ pub struct StorageMetrics {
     pub db_writes: u64,
 }
 
-/// Persistent storage.
+/// Persistent storage for run-time state.
 /// Thread-safe, async.
 ///
 /// Combines persistent DB (`redb`) + in-memory LRU cache (`quick-cache`).
 /// Allows N concurrent reads and up to 1 concurrent write.
 ///
-/// Returns ARCs with immutable caches owned by storage. Storage will do
+/// Returns ARCs with immutable caches owned by vault. Vault will do
 /// copy-on-write if it needs to update cache, but it's not the unique owner.
 #[derive(Debug)]
-pub struct Storage {
+pub struct Vault {
     db: Arc<Db>,
     write_lock: Mutex<()>,
-    port_cache: RwLock<MemCache<PortDescriptor>>,
+    endpoint_cache: RwLock<MemCache<EndpointSpec>>,
     // metrics
     cache_hits: AtomicU64,
     cache_misses: AtomicU64,
@@ -93,17 +93,17 @@ struct MemCache<T> {
     kset: Option<Arc<HashSet<String>>>,
 }
 
-impl Storage {
+impl Vault {
     /// Create instance.
-    pub async fn open(config: &StorageConfig) -> Result<Self> {
+    pub async fn open(config: &VaultConfig) -> Result<Self> {
         config.validate()?;
 
         let db = Db::open(config.db_path.as_str()).await?;
 
-        Ok(Storage {
+        Ok(Vault {
             db,
             write_lock: Mutex::new(()),
-            port_cache: RwLock::new(MemCache {
+            endpoint_cache: RwLock::new(MemCache {
                 kvmap: Cache::new(config.cache_size),
                 kset: None,
             }),
@@ -115,16 +115,16 @@ impl Storage {
     }
 
     /// Get metrics.
-    pub async fn metrics(&self) -> StorageMetrics {
+    pub async fn metrics(&self) -> VaultMetrics {
         let db_metrics = self.db.metrics();
 
         let mut cache_size = 0;
-        for cache in [&self.port_cache] {
+        for cache in [&self.endpoint_cache] {
             let rlocked_cache = cache.read().await;
             cache_size += rlocked_cache.kvmap.len();
         }
 
-        StorageMetrics {
+        VaultMetrics {
             cache_size,
             cache_hits: self.cache_hits.load(Ordering::SeqCst),
             cache_misses: self.cache_misses.load(Ordering::SeqCst),
@@ -135,42 +135,48 @@ impl Storage {
         }
     }
 
-    /// List all port UIDs.
+    /// List all endpoint UIDs.
     /// First call will read the list from DB, subsequent calls will
     /// return value from memory.
-    pub async fn list_ports(&self) -> Result<Arc<HashSet<String>>> {
-        self.list_imp(db::PORT_TABLE, &self.port_cache).await
+    pub async fn list_endpoints(&self) -> Result<Arc<HashSet<String>>> {
+        self.list_imp(db::ENDPOINT_TABLE, &self.endpoint_cache).await
     }
 
-    /// Read port by UID.
+    /// Read endpoint by UID.
     /// Returns value from in-memory cache if present, otherwise
     /// reads from DB and updates cache.
-    pub async fn read_port(&self, uid: &str) -> Result<Arc<PortDescriptor>> {
+    pub async fn read_endpoint(&self, uid: &str) -> Result<Arc<EndpointSpec>> {
         if uid.is_empty() {
-            return Err(StorageError::InvalidArgument("empty uid"));
+            return Err(VaultError::InvalidArgument("empty uid"));
         }
-        self.read_imp(db::PORT_TABLE, &self.port_cache, uid).await
+        self.read_imp(db::ENDPOINT_TABLE, &self.endpoint_cache, uid).await
     }
 
-    /// Write port.
+    /// Write endpoint.
     /// Updates both in-memory cache and DB.
     /// Blocks until DB transaction is completed.
-    pub async fn write_port(&self, port: &Arc<PortDescriptor>) -> Result<()> {
-        if port.uid.is_empty() {
-            return Err(StorageError::InvalidArgument("empty port.uid"));
+    pub async fn write_endpoint(&self, endpoint: &Arc<EndpointSpec>) -> Result<()> {
+        if endpoint.endpoint_uuid.is_empty() {
+            return Err(VaultError::InvalidArgument("empty endpoint.uid"));
         }
-        port.validate()?;
-        self.write_imp(db::PORT_TABLE, &self.port_cache, &port.uid, port).await
+        endpoint.validate()?;
+        self.write_imp(
+            db::ENDPOINT_TABLE,
+            &self.endpoint_cache,
+            &endpoint.endpoint_uuid,
+            endpoint,
+        )
+        .await
     }
 
-    /// Remove port.
+    /// Remove endpoint.
     /// Updates both in-memory cache and DB.
     /// Blocks until DB transaction is completed.
-    pub async fn remove_port(&self, uid: &str) -> Result<()> {
+    pub async fn remove_endpoint(&self, uid: &str) -> Result<()> {
         if uid.is_empty() {
-            return Err(StorageError::InvalidArgument("empty uid"));
+            return Err(VaultError::InvalidArgument("empty uid"));
         }
-        self.remove_imp(db::PORT_TABLE, &self.port_cache, uid).await
+        self.remove_imp(db::ENDPOINT_TABLE, &self.endpoint_cache, uid).await
     }
 
     /// Generic list implementation.

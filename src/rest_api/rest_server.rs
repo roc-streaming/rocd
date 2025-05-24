@@ -1,6 +1,6 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-use crate::io_port::PortDispatcher;
+use crate::io_endpoint::EndpointDispatcher;
 use crate::io_stream::StreamDispatcher;
 use crate::rest_api::rest_controller::RestController;
 
@@ -17,9 +17,9 @@ pub struct RestServer {
 
 impl RestServer {
     pub fn new(
-        port_dispatcher: Arc<PortDispatcher>, stream_dispatcher: Arc<StreamDispatcher>,
+        endpoint_dispatcher: Arc<EndpointDispatcher>, stream_dispatcher: Arc<StreamDispatcher>,
     ) -> Self {
-        let controller = Arc::new(RestController::new(port_dispatcher, stream_dispatcher));
+        let controller = Arc::new(RestController::new(endpoint_dispatcher, stream_dispatcher));
 
         let mut router = controller.router();
 

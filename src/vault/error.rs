@@ -3,7 +3,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum StorageError {
+pub enum VaultError {
     #[error("can't open db: {0}")]
     DatabaseError(#[from] redb::DatabaseError),
 
