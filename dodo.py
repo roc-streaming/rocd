@@ -86,7 +86,9 @@ def task_build_exe():
     return {
         'basename': 'build_exe',
         'actions': [
-            Interactive('cargo build'),
+            Interactive(
+                'cargo build',
+                env={**os.environ, **{'RUSTFLAGS': '--deny warnings'}}),
         ],
         'title': _color_title,
     }
