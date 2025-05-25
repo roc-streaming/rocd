@@ -1,26 +1,34 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-mod rest_client;
+mod test_client;
+mod test_server;
 
-use rocd::io_endpoint::EndpointDispatcher;
-use rocd::io_stream::StreamDispatcher;
-use rocd::rest_api::RestServer;
+use crate::test_client::Client;
+use crate::test_client::types::*;
+use crate::test_server::Server;
 
-use std::sync::Arc;
-
-fn make_server() -> RestServer {
-    let endpoint_dispatcher = Arc::new(EndpointDispatcher::new());
-    let stream_dispatcher = Arc::new(StreamDispatcher::new());
-
-    RestServer::new(endpoint_dispatcher, stream_dispatcher)
-}
+use reqwest::StatusCode;
 
 #[tokio::test]
-async fn test_todo() {
-    let _server = make_server();
+async fn test_list() {
+    let server = Server::new();
+    let client = Client::new(server.url());
 
-    // TODO:
-    //  - run server in separate thread
-    //  - get server address
-    //  - create client with that address
+    {
+        // GET /peer/self/endpoints
+        let resp = client.list_endpoints().await.unwrap();
+
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(
+            resp.into_inner(),
+            vec![EndpointSpec {
+                endpoint_uuid: "11-22-33".into(),
+                endpoint_type: EndpointType::SystemDevice,
+                stream_direction: EndpointDir::Output,
+                driver: EndpointDriver::Pipewire,
+                display_name: "Display Name".into(),
+                system_name: "system_name".into(),
+            }],
+        );
+    }
 }

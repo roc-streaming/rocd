@@ -67,7 +67,7 @@ pub mod types {
     ///}
     /// ```
     /// </details>
-    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
+    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct AddressAnchorSpec {
         pub control_uri: ::std::string::String,
         pub repair_uri: ::std::string::String,
@@ -113,7 +113,7 @@ pub mod types {
     ///}
     /// ```
     /// </details>
-    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
+    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub enum AnchorSpec {
         #[serde(rename = "endpoint")]
         Endpoint(EndpointAnchorSpec),
@@ -242,7 +242,7 @@ pub mod types {
     ///}
     /// ```
     /// </details>
-    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
+    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct EndpointAnchorSpec {
         pub endpoint_uuid: ::std::string::String,
         pub peer_uuid: ::std::string::String,
@@ -457,7 +457,7 @@ pub mod types {
     ///}
     /// ```
     /// </details>
-    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
+    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct EndpointSpec {
         ///Human-readable name.
         pub display_name: ::std::string::String,
@@ -590,7 +590,7 @@ pub mod types {
     ///}
     /// ```
     /// </details>
-    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
+    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct StreamSpec {
         ///To where this stream writes audio.
         pub destinations: ::std::vec::Vec<AnchorSpec>,

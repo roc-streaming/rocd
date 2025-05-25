@@ -5,4 +5,5 @@ mod rest_controller;
 mod rest_server;
 
 pub use self::parse_addr::*;
+pub use self::rest_controller::*;
 pub use self::rest_server::*;

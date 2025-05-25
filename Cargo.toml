@@ -56,7 +56,7 @@ features = ["std", "help", "usage", "error-context", "derive", "wrap_help"]
 
 [dependencies.salvo]
 version = "0.78.0"
-features = ["logging", "oapi"]
+features = ["logging", "oapi", "server-handle"]
 
 [dependencies.salvo-craft-macros]
 version = "0.78.0"

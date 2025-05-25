@@ -22,10 +22,6 @@ async fn main() {
 
     let args = CliArgs::parse();
 
-    let endpoint_dispatcher = Arc::new(EndpointDispatcher::new());
-    let stream_dispatcher = Arc::new(StreamDispatcher::new());
-    let server = RestServer::new(endpoint_dispatcher, stream_dispatcher);
-
     tracing::info!("starting server with options {args:?}");
 
     let (host, port) = match rest_api::parse_addr(&args.addr) {
@@ -36,7 +32,17 @@ async fn main() {
         },
     };
 
-    if let Err(err) = server.serve(host, port).await {
+    let endpoint_dispatcher = Arc::new(EndpointDispatcher::new());
+    let stream_dispatcher = Arc::new(StreamDispatcher::new());
+
+    let server = Arc::new(RestServer::new(endpoint_dispatcher, stream_dispatcher));
+
+    if let Err(err) = server.start(host, port).await {
+        tracing::error!("http server failed to start: {err}");
+        process::exit(1);
+    }
+
+    if let Err(err) = server.wait().await {
         tracing::error!("http server failed: {err}");
         process::exit(1);
     }

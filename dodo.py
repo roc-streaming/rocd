@@ -117,7 +117,7 @@ def task_gen_client():
         'basename': 'gen_client',
         'actions': [
             Interactive(
-                'cargo run -p util --bin codegen -- --client > tests/rest_client/mod.rs'
+                'cargo run -p util --bin codegen -- --client > tests/test_client/mod.rs'
             ),
         ],
         'task_dep': ['gen_spec'],
