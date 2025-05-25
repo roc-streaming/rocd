@@ -4,7 +4,8 @@ use salvo::oapi::ToSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Clone, PartialEq, Debug, Validate, ToSchema, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Validate, Serialize, Deserialize, ToSchema)]
+#[salvo(schema(name = "EndpointSpec"))]
 pub struct EndpointSpec {
     /// Globally unique endpoint identifier.
     #[validate(length(min = 1))]
@@ -28,7 +29,8 @@ pub struct EndpointSpec {
     pub system_name: String,
 }
 
-#[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
+#[salvo(schema(name = "EndpointType"))]
 #[serde(rename_all = "snake_case")]
 pub enum EndpointType {
     /// Audio device managed by OS.
@@ -37,7 +39,8 @@ pub enum EndpointType {
     StreamingDevice,
 }
 
-#[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
+#[salvo(schema(name = "EndpointDir"))]
 #[serde(rename_all = "snake_case")]
 pub enum EndpointDir {
     /// Endpoint can be stream source.
@@ -48,7 +51,8 @@ pub enum EndpointDir {
     Duplex,
 }
 
-#[derive(Clone, PartialEq, Debug, ToSchema, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
+#[salvo(schema(name = "EndpointDriver"))]
 #[serde(rename_all = "snake_case")]
 pub enum EndpointDriver {
     Pipewire,

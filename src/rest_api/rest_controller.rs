@@ -23,23 +23,32 @@ impl RestController {
     }
 
     pub fn router(self: &Arc<Self>) -> Router {
-        Router::new().push(
+        Router::new()
             // peers
-            Router::with_path("peers/self").push(
-                // self
-                Router::with_path("self")
-                    // endpoints
-                    .push(Router::with_path("endpoints").get(self.list_endpoints()))
+            .push(
+                Router::with_path("peers")
+                    // self
                     .push(
-                        Router::with_path("endpoints/{uid}")
-                            .get(self.read_endpoint())
-                            .put(self.update_endpoint()),
+                        Router::with_path("self")
+                            // endpoints
+                            .push(Router::with_path("endpoints").get(self.list_endpoints()))
+                            .push(
+                                Router::with_path("endpoints/{uid}")
+                                    .get(self.read_endpoint())
+                                    .put(self.update_endpoint()),
+                            ),
                     ),
-            ),
-        )
+            )
+            // streams
+            .push(Router::with_path("streams").get(self.list_streams()))
+            .push(
+                Router::with_path("streams/{uid}")
+                    .get(self.read_stream())
+                    .put(self.update_stream()),
+            )
     }
 
-    // ports
+    // endpoints
 
     #[craft(endpoint(operation_id = "list_endpoints", status_codes(200)))]
     async fn list_endpoints(self: &Arc<Self>) -> Json<Vec<EndpointSpec>> {

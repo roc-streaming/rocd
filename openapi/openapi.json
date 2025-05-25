@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/peers/self/self/endpoints": {
+    "/peers/self/endpoints": {
       "get": {
         "operationId": "list_endpoints",
         "responses": {
@@ -16,7 +16,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/rocd.dto.endpoint_spec.EndpointSpec"
+                    "$ref": "#/components/schemas/EndpointSpec"
                   }
                 }
               }
@@ -25,7 +25,7 @@
         }
       }
     },
-    "/peers/self/self/endpoints/{uid}": {
+    "/peers/self/endpoints/{uid}": {
       "get": {
         "operationId": "read_endpoint",
         "parameters": [
@@ -45,7 +45,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/rocd.dto.endpoint_spec.EndpointSpec"
+                  "$ref": "#/components/schemas/EndpointSpec"
                 }
               }
             }
@@ -71,7 +71,81 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/rocd.dto.endpoint_spec.EndpointSpec"
+                  "$ref": "#/components/schemas/EndpointSpec"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/streams": {
+      "get": {
+        "operationId": "list_streams",
+        "responses": {
+          "200": {
+            "description": "Response with json format data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StreamSpec"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/streams/{uid}": {
+      "get": {
+        "operationId": "read_stream",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Get parameter `uid` from request url path.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response with json format data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamSpec"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_stream",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Get parameter `uid` from request url path.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response with json format data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamSpec"
                 }
               }
             }
@@ -82,7 +156,82 @@
   },
   "components": {
     "schemas": {
-      "rocd.dto.endpoint_spec.EndpointDir": {
+      "AddressAnchorSpec": {
+        "type": "object",
+        "required": [
+          "type",
+          "source_uri",
+          "repair_uri",
+          "control_uri"
+        ],
+        "properties": {
+          "control_uri": {
+            "type": "string"
+          },
+          "repair_uri": {
+            "type": "string"
+          },
+          "source_uri": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AnchorType"
+          }
+        }
+      },
+      "AnchorSpec": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "endpoint"
+            ],
+            "properties": {
+              "endpoint": {
+                "$ref": "#/components/schemas/EndpointAnchorSpec"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "address"
+            ],
+            "properties": {
+              "address": {
+                "$ref": "#/components/schemas/AddressAnchorSpec"
+              }
+            }
+          }
+        ]
+      },
+      "AnchorType": {
+        "type": "string",
+        "enum": [
+          "endpoint",
+          "address"
+        ]
+      },
+      "EndpointAnchorSpec": {
+        "type": "object",
+        "required": [
+          "type",
+          "peer_uuid",
+          "endpoint_uuid"
+        ],
+        "properties": {
+          "endpoint_uuid": {
+            "type": "string"
+          },
+          "peer_uuid": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AnchorType"
+          }
+        }
+      },
+      "EndpointDir": {
         "type": "string",
         "enum": [
           "input",
@@ -90,13 +239,13 @@
           "duplex"
         ]
       },
-      "rocd.dto.endpoint_spec.EndpointDriver": {
+      "EndpointDriver": {
         "type": "string",
         "enum": [
           "pipewire"
         ]
       },
-      "rocd.dto.endpoint_spec.EndpointSpec": {
+      "EndpointSpec": {
         "type": "object",
         "required": [
           "endpoint_uuid",
@@ -112,17 +261,17 @@
             "description": "Human-readable name."
           },
           "driver": {
-            "$ref": "#/components/schemas/rocd.dto.endpoint_spec.EndpointDriver"
+            "$ref": "#/components/schemas/EndpointDriver"
           },
           "endpoint_type": {
-            "$ref": "#/components/schemas/rocd.dto.endpoint_spec.EndpointType"
+            "$ref": "#/components/schemas/EndpointType"
           },
           "endpoint_uuid": {
             "type": "string",
             "description": "Globally unique endpoint identifier."
           },
           "stream_direction": {
-            "$ref": "#/components/schemas/rocd.dto.endpoint_spec.EndpointDir"
+            "$ref": "#/components/schemas/EndpointDir"
           },
           "system_name": {
             "type": "string",
@@ -130,12 +279,40 @@
           }
         }
       },
-      "rocd.dto.endpoint_spec.EndpointType": {
+      "EndpointType": {
         "type": "string",
         "enum": [
           "system_device",
           "streaming_device"
         ]
+      },
+      "StreamSpec": {
+        "type": "object",
+        "required": [
+          "stream_uuid",
+          "sources",
+          "destinations"
+        ],
+        "properties": {
+          "destinations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnchorSpec"
+            },
+            "description": "To where this stream writes audio."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnchorSpec"
+            },
+            "description": "From where this stream reads audio."
+          },
+          "stream_uuid": {
+            "type": "string",
+            "description": "Globally unique stream identifier."
+          }
+        }
       }
     }
   }
