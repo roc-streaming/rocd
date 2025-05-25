@@ -34,7 +34,7 @@ reqwest = "0.12.15"
 tempfile = "3.19.1"
 tracing-test = "0.2.5"
 
-[dependencies.reqwest]
+[dev-dependencies.reqwest]
 version = "0.12.15"
 features = ["json", "stream"]
 
