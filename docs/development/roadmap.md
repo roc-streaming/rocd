@@ -8,7 +8,7 @@
     - REST API
     - OpenAPI (Swagger)
     - CLI, logging
-- :white_large_square: **Integration tests skeleton** ([gh-49][gh-49])
+- :white_check_mark: **Integration tests skeleton** ([gh-49][gh-49])
     - driver mock + vault + endpoint and stream dispatchers + rest api server
     - swagger-generated client
     - send requests via client and check how driver mock behaves
@@ -18,11 +18,11 @@
     - generic driver interface
     - implementation for PipeWire using C bindings to libpipewire
 - :white_large_square: **Endpoint management** ([gh-46][gh-46])
-    - CRUD io for endpoints (audio devices)
-    - uses DeviceDriver to control devices
+    - CRUD for endpoints (audio devices)
+    - use DeviceDriver to control devices
 - :white_large_square: **Stream management** ([gh-47][gh-47])
-    - CRUD for network streams
-    - uses DeviceDriver for I/O
+    - CRUD for streams
+    - use DeviceDriver for I/O
     - support sending from endpoint to address
     - support receiving from address to endpoint
     - for now don't support endpoint-to-endpoint
