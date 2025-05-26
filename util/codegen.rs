@@ -2,13 +2,19 @@
 // Licensed under MPL-2.0
 use rocd::rest_api::RestController;
 
-use clap::{Parser, ValueEnum};
-use std::io::{self, Write};
+use clap::{ArgGroup, Parser, ValueEnum};
+use std::fs;
+use std::path::Path;
 use std::process;
 use std::sync::Arc;
 
 #[derive(Parser, Debug)]
 #[command(about = "rocd code generator")]
+#[clap(group(
+    ArgGroup::new("generator")
+        .required(true)
+        .args(&["openapi", "progenitor"]),
+))]
 struct CliArgs {
     /// Dump openapi spec.
     #[arg(long, value_enum, value_name = "FORMAT")]
@@ -16,7 +22,11 @@ struct CliArgs {
 
     /// Generate openapi client using progenitor.
     #[arg(long, default_value_t = false)]
-    client: bool,
+    progenitor: bool,
+
+    /// Output file name.
+    #[arg(short, long)]
+    output: String,
 }
 
 #[derive(ValueEnum, Clone, Debug)]
@@ -56,26 +66,36 @@ fn generate_rust_client() -> String {
     prettyplease::unparse(&ast)
 }
 
+fn write_file(path: &str, content: &str) {
+    let p = Path::new(path);
+    if p.exists() && fs::read_to_string(p).unwrap_or_default() == content {
+        // Don't write file if it wasn't actually changed, to avoid
+        // updating modification time and trigerring rebuild.
+        return;
+    }
+
+    fs::write(p, content).unwrap();
+}
+
 fn main() {
     let args = CliArgs::parse();
 
     match args.openapi {
         Some(OpenapiFormat::Json) => {
-            io::stdout().write_all(generate_json_spec().as_bytes()).unwrap();
+            write_file(&args.output, &generate_json_spec());
             process::exit(0);
         },
         Some(OpenapiFormat::Yaml) => {
-            io::stdout().write_all(generate_yaml_spec().as_bytes()).unwrap();
+            write_file(&args.output, &generate_yaml_spec());
             process::exit(0);
         },
         None => (),
     };
 
-    if args.client {
-        io::stdout().write_all(generate_rust_client().as_bytes()).unwrap();
+    if args.progenitor {
+        write_file(&args.output, &generate_rust_client());
         process::exit(0);
     }
 
-    eprintln!("at least one option required");
     process::exit(1);
 }

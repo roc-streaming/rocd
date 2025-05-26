@@ -100,10 +100,10 @@ def task_gen_spec():
         'basename': 'gen_spec',
         'actions': [
             Interactive(
-                'cargo run -p util --bin codegen -- --openapi=json > openapi/openapi.json'
+                'cargo run -p util --bin codegen -- --openapi=json -o openapi/openapi.json'
             ),
             Interactive(
-                'cargo run -p util --bin codegen -- --openapi=yaml > openapi/openapi.yaml'
+                'cargo run -p util --bin codegen -- --openapi=yaml -o openapi/openapi.yaml'
             ),
         ],
         'task_dep': ['build_exe'],
@@ -117,7 +117,7 @@ def task_gen_client():
         'basename': 'gen_client',
         'actions': [
             Interactive(
-                'cargo run -p util --bin codegen -- --client > tests/test_client/mod.rs'
+                'cargo run -p util --bin codegen -- --progenitor -o tests/test_client/mod.rs'
             ),
         ],
         'task_dep': ['gen_spec'],
