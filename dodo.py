@@ -172,7 +172,7 @@ def task_docs():
 # doit docs_d2
 def task_docs_d2():
     """build svg files from d2 diagrams"""
-    for d2_file in glob.glob('docs/assets/dia/*.d2'):
+    for d2_file in glob.glob('docs/diagrams/*.d2'):
         svg_file = d2_file.replace('.d2', '.svg')
         yield {
             'basename': 'docs_d2',
@@ -225,7 +225,7 @@ def task_wipe_docs():
         'actions': [
             _delete_files('site'),
             _delete_files('openapi/openapi.html'),
-            _delete_files('docs/assets/dia/*.svg'),
+            _delete_files('docs/diagrams/*.svg'),
         ],
         'title': _color_title,
     }

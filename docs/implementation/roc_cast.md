@@ -44,7 +44,7 @@ This diagram shows example setup where user has three Roc Cast/rocd instances:
 
 All three `rocd` instances discover each other in LAN and communicate via ZMQ and RTP.
 
-![](./../assets/dia/roc-cast-interaction.svg)
+![](./../diagrams/roc-cast-interaction.svg)
 /// caption
 Example Roc Cast setup
 ///

@@ -12,7 +12,7 @@
 
 `rocd` incorporates Roc Toolkit for the transport part, [ZeroMQ](https://zeromq.org/) for the P2P signaling protocol, and implements high-level orchestration on top of that. Everything is wrapped into a simple **REST API** that you can use in your application.
 
-![](./assets/dia/overview.svg)
+![](./diagrams/overview.svg)
 
 ## Features
 

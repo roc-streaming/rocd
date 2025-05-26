@@ -13,7 +13,7 @@ Roc Toolkit has several [API groups](https://roc-streaming.org/toolkit/docs/api/
 **encoder/decoder API**
 :    Network-less version of sender and receiver that allow user to encode audio stream into network packets (`roc_sender_encoder`) and decode them back into audio stream (`roc_receiver_decoder`). Does not implement delivery itself.
 
-    ![](./../assets/dia/roc-toolkit-apis-1.svg)
+    ![](./../diagrams/roc-toolkit-apis-1.svg)
     /// caption
     `roc_sender_encoder` example workflow
     ///
@@ -21,7 +21,7 @@ Roc Toolkit has several [API groups](https://roc-streaming.org/toolkit/docs/api/
 **sender/receiver API**
 :    Basic single-stream version of sender and receiver. User writes audio stream to sender (`roc_sender`) and reads it from receiver (`roc_receiver`). The interface looks much like a TCP socket, but under the hood it's a real-time stream with bounded latency.
 
-    ![](./../assets/dia/roc-toolkit-apis-2.svg)
+    ![](./../diagrams/roc-toolkit-apis-2.svg)
     /// caption
     `roc_sender` example workflow
     ///
@@ -33,7 +33,7 @@ Roc Toolkit has several [API groups](https://roc-streaming.org/toolkit/docs/api/
 
         `roc_transceiver` is not implemented yet.
 
-    ![](./../assets/dia/roc-toolkit-apis-3.svg)
+    ![](./../diagrams/roc-toolkit-apis-3.svg)
     /// caption
     `roc_transceiver` example workflow
     ///
@@ -42,7 +42,7 @@ Roc Toolkit has several [API groups](https://roc-streaming.org/toolkit/docs/api/
 
 When `roc_transceiver` API is ready (see [roc-toolkit#gh-260](https://github.com/roc-streaming/roc-toolkit/issues/260)), `rocd` will use it to fully delegate real-time path to `libroc`.
 
-![](./../assets/dia/roc-toolkit-interaction.svg)
+![](./../diagrams/roc-toolkit-interaction.svg)
 /// caption
 example connection between a few `rocd` instances using `roc_transceiver` API
 ///
