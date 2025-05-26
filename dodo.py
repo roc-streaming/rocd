@@ -3,6 +3,7 @@ import atexit
 import functools
 import glob
 import os
+import platform
 import shlex
 import shutil
 import signal
@@ -18,15 +19,13 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 os.environ['TERM'] = 'xterm-color'
 
-def _delete_files(pattern):
-    def task():
-        for path in glob.glob(pattern):
-            print(f"Removing '{path}'")
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            else:
-                os.remove(path)
-    return task
+@functools.cache
+def _features():
+    feat = []
+    if platform.system() == 'Linux':
+        feat += ['pipewire']
+
+    return ','.join(feat)
 
 @functools.cache
 def _colors_supported():
@@ -54,6 +53,16 @@ def _color_title(task):
         return '{}=>{}'.format(_colorize(name, 'yellow'), title)
     else:
         return _colorize(text, 'yellow')
+
+def _delete_files(pattern):
+    def task():
+        for path in glob.glob(pattern):
+            print(f"Removing '{path}'")
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+    return task
 
 DOIT_CONFIG = {
     'default_tasks': ['all'],
@@ -83,11 +92,16 @@ def task_build():
 # doit build_exe
 def task_build_exe():
     """build daemon"""
+    command = ['cargo', 'build', '--workspace']
+    feat = _features()
+    if feat:
+        command += ['--features', feat]
+
     return {
         'basename': 'build_exe',
         'actions': [
             Interactive(
-                'cargo build --workspace',
+                shlex.join(command),
                 env={**os.environ, **{'RUSTFLAGS': '--deny warnings'}}),
         ],
         'title': _color_title,
@@ -139,10 +153,15 @@ def task_lint():
 # doit test
 def task_test():
     """run tests"""
+    command = ['cargo', 'test']
+    feat = _features()
+    if feat:
+        command += ['--features', feat]
+
     return {
         'basename': 'test',
         'actions': [
-            Interactive('cargo test'),
+            Interactive(shlex.join(command)),
         ],
         'task_dep': ['lint'],
         'title': _color_title,
