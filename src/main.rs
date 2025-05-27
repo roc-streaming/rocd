@@ -2,10 +2,12 @@
 // Licensed under MPL-2.0
 use rocd::io_endpoint::EndpointDispatcher;
 use rocd::io_stream::StreamDispatcher;
-use rocd::rest_api::{self, RestServer};
+use rocd::rest_api::RestServer;
 
 use clap::Parser;
+use std::net::SocketAddr;
 use std::process;
+use std::str::FromStr;
 use std::sync::Arc;
 
 #[derive(Parser, Debug)]
@@ -24,8 +26,8 @@ async fn main() {
 
     tracing::info!("starting server with options {args:?}");
 
-    let (host, port) = match rest_api::parse_addr(&args.addr) {
-        Ok((host, port)) => (host, port),
+    let addr = match SocketAddr::from_str(&args.addr) {
+        Ok(addr) => addr,
         Err(err) => {
             tracing::error!("invalid --addr: {err}");
             process::exit(1);
@@ -37,7 +39,7 @@ async fn main() {
 
     let server = Arc::new(RestServer::new(endpoint_dispatcher, stream_dispatcher));
 
-    if let Err(err) = server.start(host, port).await {
+    if let Err(err) = server.start(addr).await {
         tracing::error!("http server failed to start: {err}");
         process::exit(1);
     }

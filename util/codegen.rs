@@ -6,7 +6,6 @@ use clap::{ArgGroup, Parser, ValueEnum};
 use std::fs;
 use std::path::Path;
 use std::process;
-use std::sync::Arc;
 
 #[derive(Parser, Debug)]
 #[command(about = "rocd code generator")]
@@ -36,15 +35,13 @@ enum OpenapiFormat {
 }
 
 fn generate_json_spec() -> String {
-    let controller = Arc::new(RestController::new_noop());
-    let openapi = controller.openapi();
+    let openapi = RestController::openapi();
 
     openapi.to_pretty_json().unwrap() + "\n"
 }
 
 fn generate_yaml_spec() -> String {
-    let controller = Arc::new(RestController::new_noop());
-    let openapi = controller.openapi();
+    let openapi = RestController::openapi();
 
     openapi.to_yaml().unwrap()
 }

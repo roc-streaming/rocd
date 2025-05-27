@@ -5,6 +5,7 @@ use rocd::io_stream::StreamDispatcher;
 use rocd::rest_api::RestServer;
 
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use tokio::runtime;
@@ -42,7 +43,10 @@ impl Server {
                     runtime::Builder::new_current_thread().enable_all().build().unwrap();
 
                 tokio_runtime.block_on(async {
-                    let address = server.start("127.0.0.1", 0).await.unwrap();
+                    let address = server
+                        .start(SocketAddr::from_str("127.0.0.1:0").unwrap())
+                        .await
+                        .unwrap();
                     tx_addr.send(address).unwrap();
 
                     _ = rx_stop.await;

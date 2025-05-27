@@ -52,17 +52,21 @@ thiserror = "2.0.12"
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 
+[dependencies.axum]
+version = "0.8.4"
+features = ["http2"]
+
+[dependencies.axum-server]
+version = "0.7.2"
+
 [dependencies.clap]
 version = "4.5.32"
 default-features = false
 features = ["std", "help", "usage", "error-context", "derive", "wrap_help"]
 
-[dependencies.salvo]
-version = "0.78.0"
-features = ["logging", "oapi", "server-handle"]
-
-[dependencies.salvo-craft-macros]
-version = "0.78.0"
+[dependencies.pipewire]
+version = "0.8.0"
+optional = true
 
 [dependencies.serde]
 version = "1.0.219"
@@ -71,14 +75,17 @@ features = ["derive"]
 [dependencies.serde_json]
 version = "1.0.140"
 
-[dependencies.validator]
-version = "0.20.0"
-features = ["derive"]
-
 [dependencies.tokio]
 version = "1.44.2"
 features = ["full"]
 
-[dependencies.pipewire]
-version = "0.8.0"
-optional = true
+[dependencies.utoipa]
+version = "5.3.1"
+features = ["yaml", "axum_extras", "uuid", "preserve_order", "preserve_path_order"]
+
+[dependencies.utoipa-axum]
+version = "0.2.0"
+
+[dependencies.utoipa-redoc]
+version = "6.0.0"
+features = ["axum"]

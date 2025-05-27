@@ -9,7 +9,6 @@ path = "codegen.rs"
 test = false
 
 [dependencies]
-futures = "0.3.31"
 prettyplease = "0.2.32"
 progenitor = "0.10.0"
 syn = "2.0.101"

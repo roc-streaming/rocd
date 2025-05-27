@@ -31,9 +31,6 @@ pub enum VaultError {
     #[error("invalid argument: {0}")]
     InvalidArgument(&'static str),
 
-    #[error("invalid argument: {0}")]
-    InvalidEntry(#[from] validator::ValidationErrors),
-
     #[error("uid not found: {0}")]
     UidNotFound(String),
 }

@@ -46,7 +46,8 @@ fn make_endpoint_spec<S: Into<String>>(uid: S, name: S) -> Arc<EndpointSpec> {
         endpoint_type: EndpointType::SystemDevice,
         stream_direction: EndpointDir::Output,
         driver: EndpointDriver::Pipewire,
-        endpoint_uuid: uid.into(),
+        peer_uid: "test".into(),
+        endpoint_uid: uid.into(),
         display_name: "test".into(),
         system_name: name.into(),
     })

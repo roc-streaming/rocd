@@ -16,6 +16,6 @@ impl StreamDispatcher {
     }
 
     pub async fn get_stream(&self, uid: &str) -> StreamSpec {
-        StreamSpec { stream_uuid: uid.into(), sources: vec![], destinations: vec![] }
+        StreamSpec { stream_uid: uid.into(), sources: vec![], destinations: vec![] }
     }
 }

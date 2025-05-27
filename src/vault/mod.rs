@@ -19,22 +19,19 @@ use std::result;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::{Mutex, RwLock};
-use validator::Validate;
 
 pub type Result<T> = result::Result<T, VaultError>;
 
 /// Persistent storage config.
-#[derive(Builder, Default, Validate, Debug)]
+#[derive(Builder, Default, Debug)]
 #[builder(setter(into))]
 pub struct VaultConfig {
     /// DB file path.
     /// Directory should exist, file is auto-created.
-    #[validate(length(min = 1))]
     pub db_path: String,
 
     /// How much entries to cache in memory.
     #[builder(default = 1000)]
-    #[validate(range(min = 1))]
     pub cache_size: usize,
 }
 
@@ -96,8 +93,6 @@ struct MemCache<T> {
 impl Vault {
     /// Create instance.
     pub async fn open(config: &VaultConfig) -> Result<Self> {
-        config.validate()?;
-
         let db = Db::open(config.db_path.as_str()).await?;
 
         Ok(Vault {
@@ -156,14 +151,13 @@ impl Vault {
     /// Updates both in-memory cache and DB.
     /// Blocks until DB transaction is completed.
     pub async fn write_endpoint(&self, endpoint: &Arc<EndpointSpec>) -> Result<()> {
-        if endpoint.endpoint_uuid.is_empty() {
+        if endpoint.endpoint_uid.is_empty() {
             return Err(VaultError::InvalidArgument("empty endpoint.uid"));
         }
-        endpoint.validate()?;
         self.write_imp(
             db::ENDPOINT_TABLE,
             &self.endpoint_cache,
-            &endpoint.endpoint_uuid,
+            &endpoint.endpoint_uid,
             endpoint,
         )
         .await

@@ -43,6 +43,7 @@ pub mod types {
     ///
     /// ```json
     ///{
+    ///  "title": "AddressAnchorSpec",
     ///  "type": "object",
     ///  "required": [
     ///    "control_uri",
@@ -86,6 +87,7 @@ pub mod types {
     ///
     /// ```json
     ///{
+    ///  "title": "AnchorSpec",
     ///  "oneOf": [
     ///    {
     ///      "type": "object",
@@ -141,6 +143,7 @@ pub mod types {
     ///
     /// ```json
     ///{
+    ///  "title": "AnchorType",
     ///  "type": "string",
     ///  "enum": [
     ///    "endpoint",
@@ -222,17 +225,18 @@ pub mod types {
     ///
     /// ```json
     ///{
+    ///  "title": "EndpointAnchorSpec",
     ///  "type": "object",
     ///  "required": [
-    ///    "endpoint_uuid",
-    ///    "peer_uuid",
+    ///    "endpoint_uid",
+    ///    "peer_uid",
     ///    "type"
     ///  ],
     ///  "properties": {
-    ///    "endpoint_uuid": {
+    ///    "endpoint_uid": {
     ///      "type": "string"
     ///    },
-    ///    "peer_uuid": {
+    ///    "peer_uid": {
     ///      "type": "string"
     ///    },
     ///    "type": {
@@ -244,8 +248,8 @@ pub mod types {
     /// </details>
     #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct EndpointAnchorSpec {
-        pub endpoint_uuid: ::std::string::String,
-        pub peer_uuid: ::std::string::String,
+        pub endpoint_uid: ::std::string::String,
+        pub peer_uid: ::std::string::String,
         #[serde(rename = "type")]
         pub type_: AnchorType,
     }
@@ -427,13 +431,13 @@ pub mod types {
     ///    "display_name",
     ///    "driver",
     ///    "endpoint_type",
-    ///    "endpoint_uuid",
+    ///    "endpoint_uid",
+    ///    "peer_uid",
     ///    "stream_direction",
     ///    "system_name"
     ///  ],
     ///  "properties": {
     ///    "display_name": {
-    ///      "description": "Human-readable name.",
     ///      "type": "string"
     ///    },
     ///    "driver": {
@@ -442,15 +446,16 @@ pub mod types {
     ///    "endpoint_type": {
     ///      "$ref": "#/components/schemas/EndpointType"
     ///    },
-    ///    "endpoint_uuid": {
-    ///      "description": "Globally unique endpoint identifier.",
+    ///    "endpoint_uid": {
+    ///      "type": "string"
+    ///    },
+    ///    "peer_uid": {
     ///      "type": "string"
     ///    },
     ///    "stream_direction": {
     ///      "$ref": "#/components/schemas/EndpointDir"
     ///    },
     ///    "system_name": {
-    ///      "description": "OS name (if any).",
     ///      "type": "string"
     ///    }
     ///  }
@@ -459,14 +464,12 @@ pub mod types {
     /// </details>
     #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct EndpointSpec {
-        ///Human-readable name.
         pub display_name: ::std::string::String,
         pub driver: EndpointDriver,
         pub endpoint_type: EndpointType,
-        ///Globally unique endpoint identifier.
-        pub endpoint_uuid: ::std::string::String,
+        pub endpoint_uid: ::std::string::String,
+        pub peer_uid: ::std::string::String,
         pub stream_direction: EndpointDir,
-        ///OS name (if any).
         pub system_name: ::std::string::String,
     }
     impl ::std::convert::From<&EndpointSpec> for EndpointSpec {
@@ -561,29 +564,27 @@ pub mod types {
     ///
     /// ```json
     ///{
+    ///  "title": "StreamSpec",
     ///  "type": "object",
     ///  "required": [
     ///    "destinations",
     ///    "sources",
-    ///    "stream_uuid"
+    ///    "stream_uid"
     ///  ],
     ///  "properties": {
     ///    "destinations": {
-    ///      "description": "To where this stream writes audio.",
     ///      "type": "array",
     ///      "items": {
     ///        "$ref": "#/components/schemas/AnchorSpec"
     ///      }
     ///    },
     ///    "sources": {
-    ///      "description": "From where this stream reads audio.",
     ///      "type": "array",
     ///      "items": {
     ///        "$ref": "#/components/schemas/AnchorSpec"
     ///      }
     ///    },
-    ///    "stream_uuid": {
-    ///      "description": "Globally unique stream identifier.",
+    ///    "stream_uid": {
     ///      "type": "string"
     ///    }
     ///  }
@@ -592,12 +593,9 @@ pub mod types {
     /// </details>
     #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct StreamSpec {
-        ///To where this stream writes audio.
         pub destinations: ::std::vec::Vec<AnchorSpec>,
-        ///From where this stream reads audio.
         pub sources: ::std::vec::Vec<AnchorSpec>,
-        ///Globally unique stream identifier.
-        pub stream_uuid: ::std::string::String,
+        pub stream_uid: ::std::string::String,
     }
     impl ::std::convert::From<&StreamSpec> for StreamSpec {
         fn from(value: &StreamSpec) -> Self {
@@ -606,9 +604,11 @@ pub mod types {
     }
 }
 #[derive(Clone, Debug)]
-/**Client for rocd REST API
+/**Client for utoipa-axum
 
-Version: 0.1.0*/
+Utoipa's axum bindings for seamless integration for the two
+
+Version: 0.2.0*/
 pub struct Client {
     pub(crate) baseurl: String,
     pub(crate) client: reqwest::Client,
@@ -654,53 +654,21 @@ impl Client {
     /// This string is pulled directly from the source OpenAPI
     /// document and may be in any format the API selects.
     pub fn api_version(&self) -> &'static str {
-        "0.1.0"
+        "0.2.0"
     }
 }
 #[allow(clippy::all)]
 #[allow(elided_named_lifetimes)]
 impl Client {
-    /**Sends a `GET` request to `/peers/self/endpoints`
+    /**Sends a `GET` request to `/peers/{peer_uuid}/endpoints`
 
 */
     pub async fn list_endpoints<'a>(
         &'a self,
+        peer_uuid: &'a str,
     ) -> Result<ResponseValue<::std::vec::Vec<types::EndpointSpec>>, Error<()>> {
-        let url = format!("{}/peers/self/endpoints", self.baseurl,);
-        let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map
-            .append(
-                ::reqwest::header::HeaderName::from_static("api-version"),
-                ::reqwest::header::HeaderValue::from_static(self.api_version()),
-            );
-        #[allow(unused_mut)]
-        let mut request = self
-            .client
-            .get(url)
-            .header(
-                ::reqwest::header::ACCEPT,
-                ::reqwest::header::HeaderValue::from_static("application/json"),
-            )
-            .headers(header_map)
-            .build()?;
-        let result = self.client.execute(request).await;
-        let response = result?;
-        match response.status().as_u16() {
-            200u16 => ResponseValue::from_response(response).await,
-            _ => Err(Error::UnexpectedResponse(response)),
-        }
-    }
-    /**Sends a `GET` request to `/peers/self/endpoints/{uid}`
-
-Arguments:
-- `uid`: Get parameter `uid` from request url path.
-*/
-    pub async fn read_endpoint<'a>(
-        &'a self,
-        uid: &'a str,
-    ) -> Result<ResponseValue<types::EndpointSpec>, Error<()>> {
         let url = format!(
-            "{}/peers/self/endpoints/{}", self.baseurl, encode_path(& uid.to_string()),
+            "{}/peers/{}/endpoints", self.baseurl, encode_path(& peer_uuid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -725,17 +693,52 @@ Arguments:
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
-    /**Sends a `PUT` request to `/peers/self/endpoints/{uid}`
+    /**Sends a `GET` request to `/peers/{peer_uuid}/endpoints/{endpoint_uuid}`
 
-Arguments:
-- `uid`: Get parameter `uid` from request url path.
+*/
+    pub async fn read_endpoint<'a>(
+        &'a self,
+        peer_uuid: &'a str,
+        endpoint_uuid: &'a str,
+    ) -> Result<ResponseValue<types::EndpointSpec>, Error<()>> {
+        let url = format!(
+            "{}/peers/{}/endpoints/{}", self.baseurl, encode_path(& peer_uuid
+            .to_string()), encode_path(& endpoint_uuid.to_string()),
+        );
+        let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(self.api_version()),
+            );
+        #[allow(unused_mut)]
+        let mut request = self
+            .client
+            .get(url)
+            .header(
+                ::reqwest::header::ACCEPT,
+                ::reqwest::header::HeaderValue::from_static("application/json"),
+            )
+            .headers(header_map)
+            .build()?;
+        let result = self.client.execute(request).await;
+        let response = result?;
+        match response.status().as_u16() {
+            200u16 => ResponseValue::from_response(response).await,
+            _ => Err(Error::UnexpectedResponse(response)),
+        }
+    }
+    /**Sends a `PUT` request to `/peers/{peer_uuid}/endpoints/{endpoint_uuid}`
+
 */
     pub async fn update_endpoint<'a>(
         &'a self,
-        uid: &'a str,
+        peer_uuid: &'a str,
+        endpoint_uuid: &'a str,
     ) -> Result<ResponseValue<types::EndpointSpec>, Error<()>> {
         let url = format!(
-            "{}/peers/self/endpoints/{}", self.baseurl, encode_path(& uid.to_string()),
+            "{}/peers/{}/endpoints/{}", self.baseurl, encode_path(& peer_uuid
+            .to_string()), encode_path(& endpoint_uuid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -790,17 +793,15 @@ Arguments:
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
-    /**Sends a `GET` request to `/streams/{uid}`
+    /**Sends a `GET` request to `/streams/{stream_uuid}`
 
-Arguments:
-- `uid`: Get parameter `uid` from request url path.
 */
     pub async fn read_stream<'a>(
         &'a self,
-        uid: &'a str,
+        stream_uuid: &'a str,
     ) -> Result<ResponseValue<types::StreamSpec>, Error<()>> {
         let url = format!(
-            "{}/streams/{}", self.baseurl, encode_path(& uid.to_string()),
+            "{}/streams/{}", self.baseurl, encode_path(& stream_uuid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -825,17 +826,15 @@ Arguments:
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
-    /**Sends a `PUT` request to `/streams/{uid}`
+    /**Sends a `PUT` request to `/streams/{stream_uuid}`
 
-Arguments:
-- `uid`: Get parameter `uid` from request url path.
 */
     pub async fn update_stream<'a>(
         &'a self,
-        uid: &'a str,
+        stream_uuid: &'a str,
     ) -> Result<ResponseValue<types::StreamSpec>, Error<()>> {
         let url = format!(
-            "{}/streams/{}", self.baseurl, encode_path(& uid.to_string()),
+            "{}/streams/{}", self.baseurl, encode_path(& stream_uuid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map

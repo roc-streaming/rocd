@@ -1,33 +1,50 @@
 openapi: 3.1.0
 info:
-  title: rocd REST API
-  version: 0.1.0
+  title: utoipa-axum
+  description: Utoipa's axum bindings for seamless integration for the two
+  contact:
+    name: Juha Kukkonen
+    email: juha7kukkonen@gmail.com
+  license:
+    name: MIT OR Apache-2.0
+    identifier: MIT OR Apache-2.0
+  version: 0.2.0
 paths:
-  /peers/self/endpoints:
+  /peers/{peer_uuid}/endpoints:
     get:
       operationId: list_endpoints
+      parameters:
+      - name: peer_uuid
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         '200':
-          description: Response with json format data
+          description: Success
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/EndpointSpec'
-  /peers/self/endpoints/{uid}:
+  /peers/{peer_uuid}/endpoints/{endpoint_uuid}:
     get:
       operationId: read_endpoint
       parameters:
-      - name: uid
+      - name: peer_uuid
         in: path
-        description: Get parameter `uid` from request url path.
+        required: true
+        schema:
+          type: string
+      - name: endpoint_uuid
+        in: path
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Response with json format data
+          description: Success
           content:
             application/json:
               schema:
@@ -35,15 +52,19 @@ paths:
     put:
       operationId: update_endpoint
       parameters:
-      - name: uid
+      - name: peer_uuid
         in: path
-        description: Get parameter `uid` from request url path.
+        required: true
+        schema:
+          type: string
+      - name: endpoint_uuid
+        in: path
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Response with json format data
+          description: Success
           content:
             application/json:
               schema:
@@ -53,26 +74,25 @@ paths:
       operationId: list_streams
       responses:
         '200':
-          description: Response with json format data
+          description: Success
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/StreamSpec'
-  /streams/{uid}:
+  /streams/{stream_uuid}:
     get:
       operationId: read_stream
       parameters:
-      - name: uid
+      - name: stream_uuid
         in: path
-        description: Get parameter `uid` from request url path.
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Response with json format data
+          description: Success
           content:
             application/json:
               schema:
@@ -80,15 +100,14 @@ paths:
     put:
       operationId: update_stream
       parameters:
-      - name: uid
+      - name: stream_uuid
         in: path
-        description: Get parameter `uid` from request url path.
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Response with json format data
+          description: Success
           content:
             application/json:
               schema:
@@ -97,20 +116,21 @@ components:
   schemas:
     AddressAnchorSpec:
       type: object
+      title: AddressAnchorSpec
       required:
       - type
       - source_uri
       - repair_uri
       - control_uri
       properties:
-        control_uri:
+        type:
+          $ref: '#/components/schemas/AnchorType'
+        source_uri:
           type: string
         repair_uri:
           type: string
-        source_uri:
+        control_uri:
           type: string
-        type:
-          $ref: '#/components/schemas/AnchorType'
     AnchorSpec:
       oneOf:
       - type: object
@@ -125,24 +145,27 @@ components:
         properties:
           address:
             $ref: '#/components/schemas/AddressAnchorSpec'
+      title: AnchorSpec
     AnchorType:
       type: string
+      title: AnchorType
       enum:
       - endpoint
       - address
     EndpointAnchorSpec:
       type: object
+      title: EndpointAnchorSpec
       required:
       - type
-      - peer_uuid
-      - endpoint_uuid
+      - peer_uid
+      - endpoint_uid
       properties:
-        endpoint_uuid:
-          type: string
-        peer_uuid:
-          type: string
         type:
           $ref: '#/components/schemas/AnchorType'
+        peer_uid:
+          type: string
+        endpoint_uid:
+          type: string
     EndpointDir:
       type: string
       enum:
@@ -156,28 +179,28 @@ components:
     EndpointSpec:
       type: object
       required:
-      - endpoint_uuid
+      - peer_uid
+      - endpoint_uid
       - endpoint_type
       - stream_direction
       - driver
       - display_name
       - system_name
       properties:
-        display_name:
+        peer_uid:
           type: string
-          description: Human-readable name.
-        driver:
-          $ref: '#/components/schemas/EndpointDriver'
+        endpoint_uid:
+          type: string
         endpoint_type:
           $ref: '#/components/schemas/EndpointType'
-        endpoint_uuid:
-          type: string
-          description: Globally unique endpoint identifier.
         stream_direction:
           $ref: '#/components/schemas/EndpointDir'
+        driver:
+          $ref: '#/components/schemas/EndpointDriver'
+        display_name:
+          type: string
         system_name:
           type: string
-          description: OS name (if any).
     EndpointType:
       type: string
       enum:
@@ -185,21 +208,19 @@ components:
       - streaming_device
     StreamSpec:
       type: object
+      title: StreamSpec
       required:
-      - stream_uuid
+      - stream_uid
       - sources
       - destinations
       properties:
-        destinations:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnchorSpec'
-          description: To where this stream writes audio.
+        stream_uid:
+          type: string
         sources:
           type: array
           items:
             $ref: '#/components/schemas/AnchorSpec'
-          description: From where this stream reads audio.
-        stream_uuid:
-          type: string
-          description: Globally unique stream identifier.
+        destinations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnchorSpec'

@@ -232,6 +232,9 @@ def task_wipe():
         'basename': 'wipe',
         'actions': [
             _delete_files('target'),
+            _delete_files('openapi/openapi.json'),
+            _delete_files('openapi/openapi.yaml'),
+            _delete_files('tests/test_client/mod.rs'),
         ],
         'title': _color_title,
     }
