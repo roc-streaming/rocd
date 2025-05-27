@@ -2,10 +2,12 @@
 // Licensed under MPL-2.0
 use crate::io_endpoint::EndpointDispatcher;
 use crate::io_stream::StreamDispatcher;
-use crate::rest_api::controller::RestController;
+use crate::rest_api::api_controller::ApiController;
+use crate::rest_api::doc_controller::DocController;
 use crate::rest_api::error::RestError;
 
-use axum::Router;
+use axum::extract::Request;
+use axum::{Router, ServiceExt};
 use axum_server::Server;
 use std::io;
 use std::net::SocketAddr;
@@ -13,7 +15,8 @@ use std::result;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
-use utoipa_redoc::{Redoc, Servable};
+use tower::Layer;
+use tower_http::normalize_path::NormalizePathLayer;
 
 type Result<T> = result::Result<T, RestError>;
 
@@ -21,7 +24,6 @@ type ServerHandle = axum_server::Handle;
 type TaskHandle = tokio::task::JoinHandle<io::Result<()>>;
 
 pub struct RestServer {
-    controller: Arc<RestController>,
     state: Mutex<ServerState>,
 }
 
@@ -36,22 +38,42 @@ impl RestServer {
     pub fn new(
         endpoint_dispatcher: Arc<EndpointDispatcher>, stream_dispatcher: Arc<StreamDispatcher>,
     ) -> Self {
-        let controller = Arc::new(RestController::new(endpoint_dispatcher, stream_dispatcher));
+        let mut router = Router::new();
+        let spec;
 
-        let (mut router, api) = controller.router().split_for_parts();
+        {
+            let api_controller =
+                Arc::new(ApiController::new(endpoint_dispatcher, stream_dispatcher));
 
-        router = router
-            // serve html docs
-            .merge(Redoc::with_url("/openapi", api));
+            let (api_router, api_spec) = api_controller.router_with_spec();
+
+            router = router.merge(api_router);
+            spec = api_spec;
+        }
+
+        {
+            let doc_controller = Arc::new(DocController::new(spec));
+            let doc_router = doc_controller.router();
+
+            router = router.merge(doc_router);
+        }
 
         RestServer {
-            controller,
             state: Mutex::new(ServerState {
                 router: Some(router),
                 server_handle: None,
                 task_handle: None,
             }),
         }
+    }
+
+    /// Runs http server with given router.
+    async fn serve_with_router(server: Server, router: Router) -> io::Result<()> {
+        server
+            .serve(ServiceExt::<Request>::into_make_service(
+                NormalizePathLayer::trim_trailing_slash().layer(router),
+            ))
+            .await
     }
 
     /// Bind to address and run server in background.
@@ -85,7 +107,7 @@ impl RestServer {
         let server = Server::from_tcp(tcp_listener).handle(server_handle.clone());
 
         let task_handle =
-            tokio::spawn(async move { server.serve(router.into_make_service()).await });
+            tokio::spawn(async move { RestServer::serve_with_router(server, router).await });
 
         locked_state.server_handle = Some(server_handle);
         locked_state.task_handle = Some(task_handle);

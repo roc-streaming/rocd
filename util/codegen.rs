@@ -1,6 +1,6 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-use rocd::rest_api::RestController;
+use rocd::rest_api::ApiController;
 
 use clap::{ArgGroup, Parser, ValueEnum};
 use std::fs;
@@ -35,13 +35,13 @@ enum OpenapiFormat {
 }
 
 fn generate_json_spec() -> String {
-    let openapi = RestController::openapi();
+    let openapi = ApiController::spec();
 
     openapi.to_pretty_json().unwrap() + "\n"
 }
 
 fn generate_yaml_spec() -> String {
-    let openapi = RestController::openapi();
+    let openapi = ApiController::spec();
 
     openapi.to_yaml().unwrap()
 }

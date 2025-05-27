@@ -79,6 +79,13 @@ version = "1.0.140"
 version = "1.44.2"
 features = ["full"]
 
+[dependencies.tower]
+version = "0.5.2"
+
+[dependencies.tower-http]
+version = "0.6.4"
+features = ["normalize-path"]
+
 [dependencies.utoipa]
 version = "5.3.1"
 features = ["yaml", "axum_extras", "uuid", "preserve_order", "preserve_path_order"]

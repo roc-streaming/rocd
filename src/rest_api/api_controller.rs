@@ -4,6 +4,7 @@ use crate::dto::*;
 use crate::io_endpoint::EndpointDispatcher;
 use crate::io_stream::StreamDispatcher;
 
+use axum::Router;
 use axum::extract::{Extension, Json, Path};
 use axum::http::StatusCode;
 use std::sync::Arc;
@@ -11,29 +12,26 @@ use utoipa::openapi::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
-pub struct RestController {
+pub struct ApiController {
     endpoint_dispatcher: Arc<EndpointDispatcher>,
     stream_dispatcher: Arc<StreamDispatcher>,
 }
 
-impl RestController {
-    /// Create controller.
+impl ApiController {
     pub fn new(
         endpoint_dispatcher: Arc<EndpointDispatcher>, stream_dispatcher: Arc<StreamDispatcher>,
     ) -> Self {
-        RestController { endpoint_dispatcher, stream_dispatcher }
+        ApiController { endpoint_dispatcher, stream_dispatcher }
     }
 
-    /// Get api spec.
-    pub fn openapi() -> OpenApi {
-        RestController::build().into_openapi()
+    pub fn spec() -> OpenApi {
+        ApiController::build().into_openapi()
     }
 
-    /// Construct http router for this controller.
-    pub fn router(self: &Arc<Self>) -> OpenApiRouter {
-        // we use Extension extractor instead of State to be able to construct
-        // dummy (state-less) router in openapi() method
-        RestController::build().layer(Extension(Arc::clone(self)))
+    pub fn router_with_spec(self: &Arc<Self>) -> (Router, OpenApi) {
+        let ext = Extension(Arc::clone(self));
+
+        ApiController::build().layer(ext).split_for_parts()
     }
 
     fn build() -> OpenApiRouter {
@@ -59,7 +57,7 @@ impl RestController {
     )
 )]
 async fn list_endpoints(
-    Extension(controller): Extension<Arc<RestController>>, Path(peer_uuid): Path<String>,
+    Extension(controller): Extension<Arc<ApiController>>, Path(peer_uuid): Path<String>,
 ) -> (StatusCode, Json<Vec<EndpointSpec>>) {
     (StatusCode::OK, Json(controller.endpoint_dispatcher.get_all(&peer_uuid).await))
 }
@@ -72,7 +70,7 @@ async fn list_endpoints(
     )
 )]
 async fn read_endpoint(
-    Extension(controller): Extension<Arc<RestController>>,
+    Extension(controller): Extension<Arc<ApiController>>,
     Path((peer_uuid, endpoint_uuid)): Path<(String, String)>,
 ) -> (StatusCode, Json<EndpointSpec>) {
     (
@@ -89,7 +87,7 @@ async fn read_endpoint(
     )
 )]
 async fn update_endpoint(
-    Extension(controller): Extension<Arc<RestController>>,
+    Extension(controller): Extension<Arc<ApiController>>,
     Path((peer_uuid, endpoint_uuid)): Path<(String, String)>,
 ) -> (StatusCode, Json<EndpointSpec>) {
     (
@@ -108,7 +106,7 @@ async fn update_endpoint(
     )
 )]
 async fn list_streams(
-    Extension(controller): Extension<Arc<RestController>>,
+    Extension(controller): Extension<Arc<ApiController>>,
 ) -> (StatusCode, Json<Vec<StreamSpec>>) {
     (StatusCode::OK, Json(controller.stream_dispatcher.get_all().await))
 }
@@ -121,7 +119,7 @@ async fn list_streams(
     )
 )]
 async fn read_stream(
-    Extension(controller): Extension<Arc<RestController>>, Path(stream_uuid): Path<String>,
+    Extension(controller): Extension<Arc<ApiController>>, Path(stream_uuid): Path<String>,
 ) -> (StatusCode, Json<StreamSpec>) {
     (StatusCode::OK, Json(controller.stream_dispatcher.get_stream(&stream_uuid).await))
 }
@@ -134,7 +132,7 @@ async fn read_stream(
     )
 )]
 async fn update_stream(
-    Extension(controller): Extension<Arc<RestController>>, Path(stream_uuid): Path<String>,
+    Extension(controller): Extension<Arc<ApiController>>, Path(stream_uuid): Path<String>,
 ) -> (StatusCode, Json<StreamSpec>) {
     (StatusCode::OK, Json(controller.stream_dispatcher.get_stream(&stream_uuid).await))
 }
