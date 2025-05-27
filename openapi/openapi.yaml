@@ -10,11 +10,16 @@ info:
     identifier: MIT OR Apache-2.0
   version: 0.2.0
 paths:
-  /peers/{peer_uuid}/endpoints:
+  /networks/{network_uid}/peers/{peer_uid}/endpoints:
     get:
       operationId: list_endpoints
       parameters:
-      - name: peer_uuid
+      - name: network_uid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: peer_uid
         in: path
         required: true
         schema:
@@ -28,16 +33,21 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EndpointSpec'
-  /peers/{peer_uuid}/endpoints/{endpoint_uuid}:
+  /networks/{network_uid}/peers/{peer_uid}/endpoints/{endpoint_uid}:
     get:
       operationId: read_endpoint
       parameters:
-      - name: peer_uuid
+      - name: network_uid
         in: path
         required: true
         schema:
           type: string
-      - name: endpoint_uuid
+      - name: peer_uid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: endpoint_uid
         in: path
         required: true
         schema:
@@ -52,12 +62,17 @@ paths:
     put:
       operationId: update_endpoint
       parameters:
-      - name: peer_uuid
+      - name: network_uid
         in: path
         required: true
         schema:
           type: string
-      - name: endpoint_uuid
+      - name: peer_uid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: endpoint_uid
         in: path
         required: true
         schema:
@@ -69,9 +84,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EndpointSpec'
-  /streams:
+  /networks/{network_uid}/streams:
     get:
       operationId: list_streams
+      parameters:
+      - name: network_uid
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: Success
@@ -81,11 +102,16 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/StreamSpec'
-  /streams/{stream_uuid}:
+  /networks/{network_uid}/streams/{stream_uid}:
     get:
       operationId: read_stream
       parameters:
-      - name: stream_uuid
+      - name: network_uid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: stream_uid
         in: path
         required: true
         schema:
@@ -100,7 +126,12 @@ paths:
     put:
       operationId: update_stream
       parameters:
-      - name: stream_uuid
+      - name: network_uid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: stream_uid
         in: path
         required: true
         schema:
@@ -114,58 +145,39 @@ paths:
                 $ref: '#/components/schemas/StreamSpec'
 components:
   schemas:
-    AddressAnchorSpec:
-      type: object
-      title: AddressAnchorSpec
-      required:
-      - type
-      - source_uri
-      - repair_uri
-      - control_uri
-      properties:
-        type:
-          $ref: '#/components/schemas/AnchorType'
-        source_uri:
-          type: string
-        repair_uri:
-          type: string
-        control_uri:
-          type: string
-    AnchorSpec:
+    ConnectionSpec:
       oneOf:
       - type: object
         required:
-        - endpoint
+        - connection_type
+        - endpoint_uri
         properties:
-          endpoint:
-            $ref: '#/components/schemas/EndpointAnchorSpec'
+          connection_type:
+            $ref: '#/components/schemas/ConnectionType'
+          endpoint_uri:
+            type: string
       - type: object
         required:
-        - address
+        - connection_type
+        - media_uri
+        - repair_uri
+        - control_uri
         properties:
-          address:
-            $ref: '#/components/schemas/AddressAnchorSpec'
-      title: AnchorSpec
-    AnchorType:
+          connection_type:
+            $ref: '#/components/schemas/ConnectionType'
+          media_uri:
+            type: string
+          repair_uri:
+            type: string
+          control_uri:
+            type: string
+      title: ConnectionSpec
+    ConnectionType:
       type: string
-      title: AnchorType
+      title: ConnectionType
       enum:
       - endpoint
-      - address
-    EndpointAnchorSpec:
-      type: object
-      title: EndpointAnchorSpec
-      required:
-      - type
-      - peer_uid
-      - endpoint_uid
-      properties:
-        type:
-          $ref: '#/components/schemas/AnchorType'
-        peer_uid:
-          type: string
-        endpoint_uid:
-          type: string
+      - external
     EndpointDir:
       type: string
       enum:
@@ -179,6 +191,8 @@ components:
     EndpointSpec:
       type: object
       required:
+      - endpoint_uri
+      - network_uid
       - peer_uid
       - endpoint_uid
       - endpoint_type
@@ -187,6 +201,10 @@ components:
       - display_name
       - system_name
       properties:
+        endpoint_uri:
+          type: string
+        network_uid:
+          type: string
         peer_uid:
           type: string
         endpoint_uid:
@@ -210,17 +228,19 @@ components:
       type: object
       title: StreamSpec
       required:
+      - stream_uri
+      - network_uid
       - stream_uid
-      - sources
-      - destinations
+      - source
+      - destination
       properties:
+        stream_uri:
+          type: string
+        network_uid:
+          type: string
         stream_uid:
           type: string
-        sources:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnchorSpec'
-        destinations:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnchorSpec'
+        source:
+          $ref: '#/components/schemas/ConnectionSpec'
+        destination:
+          $ref: '#/components/schemas/ConnectionSpec'

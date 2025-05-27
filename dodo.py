@@ -85,12 +85,12 @@ def task_build():
     return {
         'basename': 'build',
         'actions': [],
-        'task_dep': ['build_exe', 'gen_spec', 'gen_client'],
+        'task_dep': ['build_crate', 'gen_spec', 'gen_test'],
         'title': _color_title,
     }
 
-# doit build_exe
-def task_build_exe():
+# doit build_crate
+def task_build_crate():
     """build daemon"""
     command = ['cargo', 'build', '--workspace']
     feat = _features()
@@ -98,7 +98,7 @@ def task_build_exe():
         command += ['--features', feat]
 
     return {
-        'basename': 'build_exe',
+        'basename': 'build_crate',
         'actions': [
             Interactive(
                 shlex.join(command),
@@ -120,15 +120,15 @@ def task_gen_spec():
                 'cargo run -p util --bin codegen -- --openapi=yaml -o openapi/openapi.yaml'
             ),
         ],
-        'task_dep': ['build_exe'],
+        'task_dep': ['build_crate'],
         'title': _color_title,
     }
 
-# doit gen_spec
-def task_gen_client():
+# doit gen_test
+def task_gen_test():
     """build openapi spec"""
     return {
-        'basename': 'gen_client',
+        'basename': 'gen_test',
         'actions': [
             Interactive(
                 'cargo run -p util --bin codegen -- --progenitor -o tests/test_client/mod.rs'

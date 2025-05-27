@@ -42,14 +42,19 @@ async fn make_temp_vault() -> (TempDir, Vault) {
 }
 
 fn make_endpoint_spec<S: Into<String>>(uid: S, name: S) -> Arc<EndpointSpec> {
+    let uid: String = uid.into();
+    let name: String = name.into();
+
     Arc::new(EndpointSpec {
+        endpoint_uri: format!("/test/{}", uid),
+        network_uid: "test".into(),
+        peer_uid: "test".into(),
+        endpoint_uid: uid,
         endpoint_type: EndpointType::SystemDevice,
         stream_direction: EndpointDir::Output,
         driver: EndpointDriver::Pipewire,
-        peer_uid: "test".into(),
-        endpoint_uid: uid.into(),
-        display_name: "test".into(),
-        system_name: name.into(),
+        display_name: "Test Name".into(),
+        system_name: name,
     })
 }
 

@@ -6,45 +6,35 @@ use utoipa::ToSchema;
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
 #[schema(title = "StreamSpec")]
 pub struct StreamSpec {
+    pub stream_uri: String,
+
+    pub network_uid: String,
     pub stream_uid: String,
 
-    pub sources: Vec<AnchorSpec>,
-    pub destinations: Vec<AnchorSpec>,
+    pub source: ConnectionSpec,
+    pub destination: ConnectionSpec,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
-#[schema(title = "AnchorSpec")]
+#[schema(title = "ConnectionType")]
 #[serde(rename_all = "snake_case")]
-pub enum AnchorSpec {
-    Endpoint(EndpointAnchorSpec),
-    Address(AddressAnchorSpec),
-}
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
-#[schema(title = "AnchorType")]
-#[serde(rename_all = "snake_case")]
-pub enum AnchorType {
+pub enum ConnectionType {
     Endpoint,
-    Address,
+    External,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
-#[schema(title = "EndpointAnchorSpec")]
-pub struct EndpointAnchorSpec {
-    #[serde(rename = "type")]
-    pub anchor_type: AnchorType,
-
-    pub peer_uid: String,
-    pub endpoint_uid: String,
-}
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
-#[schema(title = "AddressAnchorSpec")]
-pub struct AddressAnchorSpec {
-    #[serde(rename = "type")]
-    pub anchor_type: AnchorType,
-
-    pub source_uri: String,
-    pub repair_uri: String,
-    pub control_uri: String,
+#[schema(title = "ConnectionSpec")]
+#[serde(untagged, rename_all = "snake_case")]
+pub enum ConnectionSpec {
+    Endpoint {
+        connection_type: ConnectionType,
+        endpoint_uri: String,
+    },
+    External {
+        connection_type: ConnectionType,
+        media_uri: String,
+        repair_uri: String,
+        control_uri: String,
+    },
 }
