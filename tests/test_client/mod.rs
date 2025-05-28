@@ -538,11 +538,11 @@ pub mod types {
     }
 }
 #[derive(Clone, Debug)]
-/**Client for utoipa-axum
+/**Client for rocd REST API
 
-Utoipa's axum bindings for seamless integration for the two
+Real-time audio streaming daemon.
 
-Version: 0.2.0*/
+Version: 0.1.0*/
 pub struct Client {
     pub(crate) baseurl: String,
     pub(crate) client: reqwest::Client,
@@ -588,7 +588,7 @@ impl Client {
     /// This string is pulled directly from the source OpenAPI
     /// document and may be in any format the API selects.
     pub fn api_version(&self) -> &'static str {
-        "0.2.0"
+        "0.1.0"
     }
 }
 #[allow(clippy::all)]

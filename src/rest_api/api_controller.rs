@@ -8,6 +8,7 @@ use axum::Router;
 use axum::extract::{Extension, Json, Path};
 use axum::http::StatusCode;
 use std::sync::Arc;
+use utoipa::OpenApi as _;
 use utoipa::openapi::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -35,7 +36,7 @@ impl ApiController {
     }
 
     fn build() -> OpenApiRouter {
-        OpenApiRouter::new()
+        OpenApiRouter::with_openapi(ApiDoc::openapi())
             // endpoints
             .routes(routes!(list_endpoints))
             .routes(routes!(read_endpoint))
@@ -46,6 +47,10 @@ impl ApiController {
             .routes(routes!(update_stream))
     }
 }
+
+#[derive(utoipa::OpenApi)]
+#[openapi(info(title = "rocd REST API",))]
+struct ApiDoc;
 
 // endpoints
 

@@ -1,10 +1,16 @@
 [workspace]
 members = ["util"]
 
+[workspace.package]
+publish = false
+
 [package]
 name = "rocd"
 version = "0.1.0"
 edition = "2024"
+description = "Real-time audio streaming daemon."
+repository = "https://github.com/roc-streaming/rocd"
+license = "MPL-2.0"
 
 [features]
 default = []
