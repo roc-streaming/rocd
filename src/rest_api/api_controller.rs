@@ -51,62 +51,48 @@ impl ApiController {
 
 #[utoipa::path(
     get,
-    path = "/networks/{network_uid}/peers/{peer_uid}/endpoints",
+    path = "/peers/{peer_uid}/endpoints",
     responses(
         (status = 200, description = "Success", body = [EndpointSpec]),
     )
 )]
 async fn list_endpoints(
-    Extension(controller): Extension<Arc<ApiController>>,
-    Path((network_uid, peer_uid)): Path<(String, String)>,
+    Extension(controller): Extension<Arc<ApiController>>, Path(peer_uid): Path<String>,
 ) -> (StatusCode, Json<Vec<EndpointSpec>>) {
-    (
-        StatusCode::OK,
-        Json(controller.endpoint_dispatcher.get_all(&network_uid, &peer_uid).await),
-    )
+    (StatusCode::OK, Json(controller.endpoint_dispatcher.get_all(&peer_uid).await))
 }
 
 #[utoipa::path(
     get,
-    path = "/networks/{network_uid}/peers/{peer_uid}/endpoints/{endpoint_uid}",
+    path = "/peers/{peer_uid}/endpoints/{endpoint_uid}",
     responses(
         (status = 200, description = "Success", body = EndpointSpec),
     )
 )]
 async fn read_endpoint(
     Extension(controller): Extension<Arc<ApiController>>,
-    Path((network_uid, peer_uid, endpoint_uid)): Path<(String, String, String)>,
+    Path((peer_uid, endpoint_uid)): Path<(String, String)>,
 ) -> (StatusCode, Json<EndpointSpec>) {
     (
         StatusCode::OK,
-        Json(
-            controller
-                .endpoint_dispatcher
-                .get_endpoint(&network_uid, &peer_uid, &endpoint_uid)
-                .await,
-        ),
+        Json(controller.endpoint_dispatcher.get_endpoint(&peer_uid, &endpoint_uid).await),
     )
 }
 
 #[utoipa::path(
     put,
-    path = "/networks/{network_uid}/peers/{peer_uid}/endpoints/{endpoint_uid}",
+    path = "/peers/{peer_uid}/endpoints/{endpoint_uid}",
     responses(
         (status = 200, description = "Success", body = EndpointSpec),
     )
 )]
 async fn update_endpoint(
     Extension(controller): Extension<Arc<ApiController>>,
-    Path((network_uid, peer_uid, endpoint_uid)): Path<(String, String, String)>,
+    Path((peer_uid, endpoint_uid)): Path<(String, String)>,
 ) -> (StatusCode, Json<EndpointSpec>) {
     (
         StatusCode::OK,
-        Json(
-            controller
-                .endpoint_dispatcher
-                .get_endpoint(&network_uid, &peer_uid, &endpoint_uid)
-                .await,
-        ),
+        Json(controller.endpoint_dispatcher.get_endpoint(&peer_uid, &endpoint_uid).await),
     )
 }
 
@@ -114,47 +100,39 @@ async fn update_endpoint(
 
 #[utoipa::path(
     get,
-    path = "/networks/{network_uid}/streams",
+    path = "/streams",
     responses(
         (status = 200, description = "Success", body = [StreamSpec]),
     )
 )]
 async fn list_streams(
-    Extension(controller): Extension<Arc<ApiController>>, Path(network_uid): Path<String>,
+    Extension(controller): Extension<Arc<ApiController>>,
 ) -> (StatusCode, Json<Vec<StreamSpec>>) {
-    (StatusCode::OK, Json(controller.stream_dispatcher.get_all(&network_uid).await))
+    (StatusCode::OK, Json(controller.stream_dispatcher.get_all().await))
 }
 
 #[utoipa::path(
     get,
-    path = "/networks/{network_uid}/streams/{stream_uid}",
+    path = "/streams/{stream_uid}",
     responses(
         (status = 200, description = "Success", body = StreamSpec),
     )
 )]
 async fn read_stream(
-    Extension(controller): Extension<Arc<ApiController>>,
-    Path((network_uid, stream_uid)): Path<(String, String)>,
+    Extension(controller): Extension<Arc<ApiController>>, Path(stream_uid): Path<String>,
 ) -> (StatusCode, Json<StreamSpec>) {
-    (
-        StatusCode::OK,
-        Json(controller.stream_dispatcher.get_stream(&network_uid, &stream_uid).await),
-    )
+    (StatusCode::OK, Json(controller.stream_dispatcher.get_stream(&stream_uid).await))
 }
 
 #[utoipa::path(
     put,
-    path = "/networks/{network_uid}/streams/{stream_uid}",
+    path = "/streams/{stream_uid}",
     responses(
         (status = 200, description = "Success", body = StreamSpec),
     )
 )]
 async fn update_stream(
-    Extension(controller): Extension<Arc<ApiController>>,
-    Path((network_uid, stream_uid)): Path<(String, String)>,
+    Extension(controller): Extension<Arc<ApiController>>, Path(stream_uid): Path<String>,
 ) -> (StatusCode, Json<StreamSpec>) {
-    (
-        StatusCode::OK,
-        Json(controller.stream_dispatcher.get_stream(&network_uid, &stream_uid).await),
-    )
+    (StatusCode::OK, Json(controller.stream_dispatcher.get_stream(&stream_uid).await))
 }

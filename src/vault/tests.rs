@@ -47,7 +47,6 @@ fn make_endpoint_spec<S: Into<String>>(uid: S, name: S) -> Arc<EndpointSpec> {
 
     Arc::new(EndpointSpec {
         endpoint_uri: format!("/test/{}", uid),
-        network_uid: "test".into(),
         peer_uid: "test".into(),
         endpoint_uid: uid,
         endpoint_type: EndpointType::SystemDevice,

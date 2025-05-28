@@ -8,7 +8,6 @@ use utoipa::ToSchema;
 pub struct StreamSpec {
     pub stream_uri: String,
 
-    pub network_uid: String,
     pub stream_uid: String,
 
     pub source: ConnectionSpec,

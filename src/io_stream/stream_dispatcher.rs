@@ -11,20 +11,17 @@ impl StreamDispatcher {
         StreamDispatcher {}
     }
 
-    pub async fn get_all(&self, _network_uid: &str) -> Vec<StreamSpec> {
-        vec![self.get_stream("11-22-33", "12-34-56").await]
+    pub async fn get_all(&self) -> Vec<StreamSpec> {
+        vec![self.get_stream("77-88-99").await]
     }
 
-    pub async fn get_stream(&self, network_uid: &str, stream_uid: &str) -> StreamSpec {
+    pub async fn get_stream(&self, stream_uid: &str) -> StreamSpec {
         StreamSpec {
-            stream_uri: format!("/networks/{network_uid}/streams/{stream_uid}"),
-            //
-            network_uid: network_uid.into(),
+            stream_uri: format!("/streams/{stream_uid}"),
             stream_uid: stream_uid.into(),
-            //
             source: ConnectionSpec::Endpoint {
                 connection_type: ConnectionType::Endpoint,
-                endpoint_uri: "/networks/11-22-33/peers/44-55-66/endpoints/77-88-99".into(),
+                endpoint_uri: "/peers/11-22-33/endpoints/44-55-66".into(),
             },
             destination: ConnectionSpec::External {
                 connection_type: ConnectionType::External,

@@ -10,15 +10,10 @@ info:
     identifier: MIT OR Apache-2.0
   version: 0.2.0
 paths:
-  /networks/{network_uid}/peers/{peer_uid}/endpoints:
+  /peers/{peer_uid}/endpoints:
     get:
       operationId: list_endpoints
       parameters:
-      - name: network_uid
-        in: path
-        required: true
-        schema:
-          type: string
       - name: peer_uid
         in: path
         required: true
@@ -33,15 +28,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EndpointSpec'
-  /networks/{network_uid}/peers/{peer_uid}/endpoints/{endpoint_uid}:
+  /peers/{peer_uid}/endpoints/{endpoint_uid}:
     get:
       operationId: read_endpoint
       parameters:
-      - name: network_uid
-        in: path
-        required: true
-        schema:
-          type: string
       - name: peer_uid
         in: path
         required: true
@@ -62,11 +52,6 @@ paths:
     put:
       operationId: update_endpoint
       parameters:
-      - name: network_uid
-        in: path
-        required: true
-        schema:
-          type: string
       - name: peer_uid
         in: path
         required: true
@@ -84,15 +69,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EndpointSpec'
-  /networks/{network_uid}/streams:
+  /streams:
     get:
       operationId: list_streams
-      parameters:
-      - name: network_uid
-        in: path
-        required: true
-        schema:
-          type: string
       responses:
         '200':
           description: Success
@@ -102,15 +81,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/StreamSpec'
-  /networks/{network_uid}/streams/{stream_uid}:
+  /streams/{stream_uid}:
     get:
       operationId: read_stream
       parameters:
-      - name: network_uid
-        in: path
-        required: true
-        schema:
-          type: string
       - name: stream_uid
         in: path
         required: true
@@ -126,11 +100,6 @@ paths:
     put:
       operationId: update_stream
       parameters:
-      - name: network_uid
-        in: path
-        required: true
-        schema:
-          type: string
       - name: stream_uid
         in: path
         required: true
@@ -192,7 +161,6 @@ components:
       type: object
       required:
       - endpoint_uri
-      - network_uid
       - peer_uid
       - endpoint_uid
       - endpoint_type
@@ -202,8 +170,6 @@ components:
       - system_name
       properties:
         endpoint_uri:
-          type: string
-        network_uid:
           type: string
         peer_uid:
           type: string
@@ -229,14 +195,11 @@ components:
       title: StreamSpec
       required:
       - stream_uri
-      - network_uid
       - stream_uid
       - source
       - destination
       properties:
         stream_uri:
-          type: string
-        network_uid:
           type: string
         stream_uid:
           type: string

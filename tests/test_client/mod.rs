@@ -363,7 +363,6 @@ pub mod types {
     ///    "endpoint_type",
     ///    "endpoint_uid",
     ///    "endpoint_uri",
-    ///    "network_uid",
     ///    "peer_uid",
     ///    "stream_direction",
     ///    "system_name"
@@ -382,9 +381,6 @@ pub mod types {
     ///      "type": "string"
     ///    },
     ///    "endpoint_uri": {
-    ///      "type": "string"
-    ///    },
-    ///    "network_uid": {
     ///      "type": "string"
     ///    },
     ///    "peer_uid": {
@@ -407,7 +403,6 @@ pub mod types {
         pub endpoint_type: EndpointType,
         pub endpoint_uid: ::std::string::String,
         pub endpoint_uri: ::std::string::String,
-        pub network_uid: ::std::string::String,
         pub peer_uid: ::std::string::String,
         pub stream_direction: EndpointDir,
         pub system_name: ::std::string::String,
@@ -508,7 +503,6 @@ pub mod types {
     ///  "type": "object",
     ///  "required": [
     ///    "destination",
-    ///    "network_uid",
     ///    "source",
     ///    "stream_uid",
     ///    "stream_uri"
@@ -516,9 +510,6 @@ pub mod types {
     ///  "properties": {
     ///    "destination": {
     ///      "$ref": "#/components/schemas/ConnectionSpec"
-    ///    },
-    ///    "network_uid": {
-    ///      "type": "string"
     ///    },
     ///    "source": {
     ///      "$ref": "#/components/schemas/ConnectionSpec"
@@ -536,7 +527,6 @@ pub mod types {
     #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct StreamSpec {
         pub destination: ConnectionSpec,
-        pub network_uid: ::std::string::String,
         pub source: ConnectionSpec,
         pub stream_uid: ::std::string::String,
         pub stream_uri: ::std::string::String,
@@ -604,17 +594,15 @@ impl Client {
 #[allow(clippy::all)]
 #[allow(elided_named_lifetimes)]
 impl Client {
-    /**Sends a `GET` request to `/networks/{network_uid}/peers/{peer_uid}/endpoints`
+    /**Sends a `GET` request to `/peers/{peer_uid}/endpoints`
 
 */
     pub async fn list_endpoints<'a>(
         &'a self,
-        network_uid: &'a str,
         peer_uid: &'a str,
     ) -> Result<ResponseValue<::std::vec::Vec<types::EndpointSpec>>, Error<()>> {
         let url = format!(
-            "{}/networks/{}/peers/{}/endpoints", self.baseurl, encode_path(& network_uid
-            .to_string()), encode_path(& peer_uid.to_string()),
+            "{}/peers/{}/endpoints", self.baseurl, encode_path(& peer_uid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -639,19 +627,17 @@ impl Client {
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
-    /**Sends a `GET` request to `/networks/{network_uid}/peers/{peer_uid}/endpoints/{endpoint_uid}`
+    /**Sends a `GET` request to `/peers/{peer_uid}/endpoints/{endpoint_uid}`
 
 */
     pub async fn read_endpoint<'a>(
         &'a self,
-        network_uid: &'a str,
         peer_uid: &'a str,
         endpoint_uid: &'a str,
     ) -> Result<ResponseValue<types::EndpointSpec>, Error<()>> {
         let url = format!(
-            "{}/networks/{}/peers/{}/endpoints/{}", self.baseurl, encode_path(&
-            network_uid.to_string()), encode_path(& peer_uid.to_string()), encode_path(&
-            endpoint_uid.to_string()),
+            "{}/peers/{}/endpoints/{}", self.baseurl, encode_path(& peer_uid
+            .to_string()), encode_path(& endpoint_uid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -676,19 +662,17 @@ impl Client {
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
-    /**Sends a `PUT` request to `/networks/{network_uid}/peers/{peer_uid}/endpoints/{endpoint_uid}`
+    /**Sends a `PUT` request to `/peers/{peer_uid}/endpoints/{endpoint_uid}`
 
 */
     pub async fn update_endpoint<'a>(
         &'a self,
-        network_uid: &'a str,
         peer_uid: &'a str,
         endpoint_uid: &'a str,
     ) -> Result<ResponseValue<types::EndpointSpec>, Error<()>> {
         let url = format!(
-            "{}/networks/{}/peers/{}/endpoints/{}", self.baseurl, encode_path(&
-            network_uid.to_string()), encode_path(& peer_uid.to_string()), encode_path(&
-            endpoint_uid.to_string()),
+            "{}/peers/{}/endpoints/{}", self.baseurl, encode_path(& peer_uid
+            .to_string()), encode_path(& endpoint_uid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -713,17 +697,13 @@ impl Client {
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
-    /**Sends a `GET` request to `/networks/{network_uid}/streams`
+    /**Sends a `GET` request to `/streams`
 
 */
     pub async fn list_streams<'a>(
         &'a self,
-        network_uid: &'a str,
     ) -> Result<ResponseValue<::std::vec::Vec<types::StreamSpec>>, Error<()>> {
-        let url = format!(
-            "{}/networks/{}/streams", self.baseurl, encode_path(& network_uid
-            .to_string()),
-        );
+        let url = format!("{}/streams", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
             .append(
@@ -747,17 +727,15 @@ impl Client {
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
-    /**Sends a `GET` request to `/networks/{network_uid}/streams/{stream_uid}`
+    /**Sends a `GET` request to `/streams/{stream_uid}`
 
 */
     pub async fn read_stream<'a>(
         &'a self,
-        network_uid: &'a str,
         stream_uid: &'a str,
     ) -> Result<ResponseValue<types::StreamSpec>, Error<()>> {
         let url = format!(
-            "{}/networks/{}/streams/{}", self.baseurl, encode_path(& network_uid
-            .to_string()), encode_path(& stream_uid.to_string()),
+            "{}/streams/{}", self.baseurl, encode_path(& stream_uid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -782,17 +760,15 @@ impl Client {
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
-    /**Sends a `PUT` request to `/networks/{network_uid}/streams/{stream_uid}`
+    /**Sends a `PUT` request to `/streams/{stream_uid}`
 
 */
     pub async fn update_stream<'a>(
         &'a self,
-        network_uid: &'a str,
         stream_uid: &'a str,
     ) -> Result<ResponseValue<types::StreamSpec>, Error<()>> {
         let url = format!(
-            "{}/networks/{}/streams/{}", self.baseurl, encode_path(& network_uid
-            .to_string()), encode_path(& stream_uid.to_string()),
+            "{}/streams/{}", self.baseurl, encode_path(& stream_uid.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map

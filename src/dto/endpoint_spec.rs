@@ -7,7 +7,6 @@ use utoipa::ToSchema;
 pub struct EndpointSpec {
     pub endpoint_uri: String,
 
-    pub network_uid: String,
     pub peer_uid: String,
     pub endpoint_uid: String,
 
