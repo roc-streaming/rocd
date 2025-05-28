@@ -17,6 +17,7 @@ use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 use tower::Layer;
 use tower_http::normalize_path::NormalizePathLayer;
+use tower_http::trace::TraceLayer;
 
 type Result<T> = result::Result<T, RestError>;
 
@@ -69,11 +70,17 @@ impl RestServer {
 
     /// Runs http server with given router.
     async fn serve_with_router(server: Server, router: Router) -> io::Result<()> {
-        server
-            .serve(ServiceExt::<Request>::into_make_service(
-                NormalizePathLayer::trim_trailing_slash().layer(router),
-            ))
-            .await
+        let service = router;
+
+        // add TraceLayer layer
+        let service = service.layer(TraceLayer::new_for_http());
+
+        // add NormalizePathLayer layer
+        let service = ServiceExt::<Request>::into_make_service(
+            NormalizePathLayer::trim_trailing_slash().layer(service),
+        );
+
+        server.serve(service).await
     }
 
     /// Bind to address and run server in background.
