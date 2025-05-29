@@ -29,8 +29,6 @@ pub type Table = TableDefinition<
     &'static [u8],
 >;
 
-pub const ENDPOINT_TABLE: Table = TableDefinition::new("endpoints");
-
 #[derive(Debug)]
 pub struct Db {
     handle: Database,
@@ -92,7 +90,7 @@ impl Db {
     }
 
     /// Obtain list of table keys (UIDs).
-    pub async fn list_entries(
+    pub async fn list_entry(
         self: &Arc<Self>, table_definition: Table,
     ) -> Result<Arc<HashSet<Uid>>> {
         // run blocking read on background thread

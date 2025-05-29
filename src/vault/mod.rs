@@ -10,7 +10,6 @@ use crate::vault::db::{Db, Table};
 pub use crate::vault::error::VaultError;
 
 use derive_builder::Builder;
-use quick_cache::sync::Cache;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::collections::HashSet;
@@ -66,28 +65,7 @@ pub struct VaultMetrics {
 /// copy-on-write if it needs to update cache, but it's not the unique owner.
 #[derive(Debug)]
 pub struct Vault {
-    db: Arc<Db>,
-    write_lock: Mutex<()>,
-    endpoint_cache: RwLock<MemCache<EndpointSpec>>,
-    // metrics
-    cache_hits: AtomicU64,
-    cache_misses: AtomicU64,
-    cache_drops: AtomicU64,
-    cache_cows: AtomicU64,
-}
-
-#[derive(Debug)]
-struct MemCache<T> {
-    /// LRU cache with the most used subset of entries present in DB.
-    /// quick-cache will automatically remove least used entries when
-    /// cache size exceeds configured limit.
-    kvmap: Cache<Uid, Arc<T>>,
-
-    /// Lazy-initialized list of all keys present in DB.
-    /// Empty until the first list_imp() call.
-    /// After it becomes not-empty, write_imp() and remove_imp(), maintain it up-to-date.
-    /// Lazy initialization allows faster startup time.
-    kset: Option<Arc<HashSet<Uid>>>,
+    backend: Backend,
 }
 
 impl Vault {
@@ -95,18 +73,129 @@ impl Vault {
     pub async fn open(config: &VaultConfig) -> Result<Self> {
         let db = Db::open(config.db_path.as_str()).await?;
 
-        Ok(Vault {
+        Ok(Vault { backend: Backend::new(config, db) })
+    }
+
+    /// Get metrics.
+    pub async fn metrics(&self) -> VaultMetrics {
+        self.backend.metrics().await
+    }
+
+    /// List all endpoint UIDs.
+    pub async fn list_endpoints(&self) -> Result<Arc<HashSet<Uid>>> {
+        self.backend.list_entities(Backend::ENDPOINT_TABLE, &self.backend.endpoint_cache).await
+    }
+
+    /// Read endpoint by UID.
+    pub async fn read_endpoint(&self, uid: &Uid) -> Result<Arc<EndpointSpec>> {
+        self.backend
+            .read_entity(Backend::ENDPOINT_TABLE, &self.backend.endpoint_cache, uid)
+            .await
+    }
+
+    /// Write endpoint.
+    pub async fn write_endpoint(&self, endpoint: &Arc<EndpointSpec>) -> Result<()> {
+        self.backend
+            .write_entity(
+                Backend::ENDPOINT_TABLE,
+                &self.backend.endpoint_cache,
+                &endpoint.endpoint_uid,
+                endpoint,
+            )
+            .await
+    }
+
+    /// Remove endpoint.
+    pub async fn remove_endpoint(&self, uid: &Uid) -> Result<()> {
+        self.backend
+            .remove_entity(Backend::ENDPOINT_TABLE, &self.backend.endpoint_cache, uid)
+            .await
+    }
+
+    /// List all stream UIDs.
+    pub async fn list_streams(&self) -> Result<Arc<HashSet<Uid>>> {
+        self.backend.list_entities(Backend::STREAM_TABLE, &self.backend.stream_cache).await
+    }
+
+    /// Read stream by UID.
+    pub async fn read_stream(&self, uid: &Uid) -> Result<Arc<StreamSpec>> {
+        self.backend.read_entity(Backend::STREAM_TABLE, &self.backend.stream_cache, uid).await
+    }
+
+    /// Write stream.
+    pub async fn write_stream(&self, stream: &Arc<StreamSpec>) -> Result<()> {
+        self.backend
+            .write_entity(
+                Backend::STREAM_TABLE,
+                &self.backend.stream_cache,
+                &stream.stream_uid,
+                stream,
+            )
+            .await
+    }
+
+    /// Remove stream.
+    pub async fn remove_stream(&self, uid: &Uid) -> Result<()> {
+        self.backend
+            .remove_entity(Backend::STREAM_TABLE, &self.backend.stream_cache, uid)
+            .await
+    }
+}
+
+#[derive(Debug)]
+struct Cache<T> {
+    /// LRU cache with the most used subset of entries present in DB.
+    /// quick-cache will automatically remove least used entries when
+    /// cache size exceeds configured limit.
+    kvmap: quick_cache::sync::Cache<Uid, Arc<T>>,
+
+    /// Lazy-initialized list of all keys present in DB.
+    /// Empty until the first list_entities() call.
+    /// After it becomes not-empty, write_entity() and remove_entity(), maintain it up-to-date.
+    /// Lazy initialization allows faster startup time.
+    kset: Option<Arc<HashSet<Uid>>>,
+}
+
+impl<T> Cache<T> {
+    fn new(config: &VaultConfig) -> Self {
+        Cache { kvmap: quick_cache::sync::Cache::new(config.cache_size), kset: None }
+    }
+}
+
+#[derive(Debug)]
+struct Backend {
+    write_lock: Mutex<()>,
+
+    // disk storage
+    db: Arc<Db>,
+
+    // memory cache
+    endpoint_cache: RwLock<Cache<EndpointSpec>>,
+    stream_cache: RwLock<Cache<StreamSpec>>,
+
+    // metrics
+    cache_hits: AtomicU64,
+    cache_misses: AtomicU64,
+    cache_drops: AtomicU64,
+    cache_cows: AtomicU64,
+}
+
+impl Backend {
+    const ENDPOINT_TABLE: Table = Table::new("endpoints");
+    const STREAM_TABLE: Table = Table::new("streams");
+
+    /// Constructor.
+    fn new(config: &VaultConfig, db: Arc<Db>) -> Self {
+        Backend {
             db,
             write_lock: Mutex::new(()),
-            endpoint_cache: RwLock::new(MemCache {
-                kvmap: Cache::new(config.cache_size),
-                kset: None,
-            }),
+            endpoint_cache: RwLock::new(Cache::new(config)),
+            stream_cache: RwLock::new(Cache::new(config)),
             cache_hits: AtomicU64::new(0),
             cache_misses: AtomicU64::new(0),
             cache_drops: AtomicU64::new(0),
             cache_cows: AtomicU64::new(0),
-        })
+        }
     }
 
     /// Get metrics.
@@ -130,43 +219,11 @@ impl Vault {
         }
     }
 
-    /// List all endpoint UIDs.
+    /// Generic list implementation.
     /// First call will read the list from DB, subsequent calls will
     /// return value from memory.
-    pub async fn list_endpoints(&self) -> Result<Arc<HashSet<Uid>>> {
-        self.list_imp(db::ENDPOINT_TABLE, &self.endpoint_cache).await
-    }
-
-    /// Read endpoint by UID.
-    /// Returns value from in-memory cache if present, otherwise
-    /// reads from DB and updates cache.
-    pub async fn read_endpoint(&self, uid: &Uid) -> Result<Arc<EndpointSpec>> {
-        self.read_imp(db::ENDPOINT_TABLE, &self.endpoint_cache, uid).await
-    }
-
-    /// Write endpoint.
-    /// Updates both in-memory cache and DB.
-    /// Blocks until DB transaction is completed.
-    pub async fn write_endpoint(&self, endpoint: &Arc<EndpointSpec>) -> Result<()> {
-        self.write_imp(
-            db::ENDPOINT_TABLE,
-            &self.endpoint_cache,
-            &endpoint.endpoint_uid,
-            endpoint,
-        )
-        .await
-    }
-
-    /// Remove endpoint.
-    /// Updates both in-memory cache and DB.
-    /// Blocks until DB transaction is completed.
-    pub async fn remove_endpoint(&self, uid: &Uid) -> Result<()> {
-        self.remove_imp(db::ENDPOINT_TABLE, &self.endpoint_cache, uid).await
-    }
-
-    /// Generic list implementation.
-    async fn list_imp<T>(
-        &self, table: Table, cache: &RwLock<MemCache<T>>,
+    async fn list_entities<T>(
+        &self, table: Table, cache: &RwLock<Cache<T>>,
     ) -> Result<Arc<HashSet<Uid>>> {
         // Fast path: keyset already initialized.
         {
@@ -178,12 +235,12 @@ impl Vault {
         }
 
         // Slow path: read keyset from db.
-        let kset: Arc<HashSet<Uid>> = self.db.list_entries(table).await?;
+        let kset: Arc<HashSet<Uid>> = self.db.list_entry(table).await?;
 
         {
             let mut wlocked_cache = cache.write().await;
 
-            // Concurrent list_imp() already initialized keyset, we have nothing to do.
+            // Concurrent list_entities() already initialized keyset, we have nothing to do.
             if let Some(kset_ptr) = wlocked_cache.kset.as_ref() {
                 self.cache_drops.fetch_add(1, Ordering::SeqCst);
                 return Ok(Arc::clone(kset_ptr));
@@ -196,8 +253,10 @@ impl Vault {
     }
 
     /// Generic read implementation for type T.
-    async fn read_imp<T>(
-        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &Uid,
+    /// Returns value from in-memory cache if present, otherwise
+    /// reads from DB and updates cache.
+    async fn read_entity<T>(
+        &self, table: Table, cache: &RwLock<Cache<T>>, uid: &Uid,
     ) -> Result<Arc<T>>
     where
         T: DeserializeOwned + Sync + Send + Debug + 'static,
@@ -220,11 +279,11 @@ impl Vault {
             if let Some(other_value) = wlocked_cache.kvmap.get(uid) {
                 // There are two possibilities how we can enter here:
                 //
-                //  - Concurrent write_imp() updated cache while we were reading from db.
+                //  - Concurrent write_entity() updated cache while we were reading from db.
                 //    In this case, the value from cache takes priority over the value we
-                //    got from db, because write_imp() updates cache before updating db.
+                //    got from db, because write_entity() updates cache before updating db.
                 //
-                //  - Concurrent read_imp() updated cache while we were reading from db.
+                //  - Concurrent read_entity() updated cache while we were reading from db.
                 //    In this case, the value we got from db is equal to value in cache,
                 //    and there is no difference which one to use.
                 //
@@ -242,8 +301,10 @@ impl Vault {
     }
 
     /// Generic write implementation for type T.
-    async fn write_imp<T>(
-        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &Uid, value: &Arc<T>,
+    /// Updates both in-memory cache and DB.
+    /// Blocks until DB transaction is completed.
+    async fn write_entity<T>(
+        &self, table: Table, cache: &RwLock<Cache<T>>, uid: &Uid, value: &Arc<T>,
     ) -> Result<()>
     where
         T: Serialize + Validate + Sync + Send + Debug + 'static,
@@ -284,8 +345,10 @@ impl Vault {
     }
 
     /// Generic delete implementation.
-    async fn remove_imp<T>(
-        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &Uid,
+    /// Updates both in-memory cache and DB.
+    /// Blocks until DB transaction is completed.
+    async fn remove_entity<T>(
+        &self, table: Table, cache: &RwLock<Cache<T>>, uid: &Uid,
     ) -> Result<()>
     where
         T: Sync + Send + 'static,
@@ -298,7 +361,7 @@ impl Vault {
 
         // Then remove from memory cache.
         // Should be done after removing from db, because otherwise concurrent
-        // read_imp() could read it from db and re-add it to cache.
+        // read_entity() could read it from db and re-add it to cache.
         // Note: remove from cache even if removing from DB failed.
         {
             let mut wlocked_cache = cache.write().await;
@@ -306,7 +369,7 @@ impl Vault {
 
             // If keyset is already lazy-initialized, update it.
             if let Some(kset_ptr) = wlocked_cache.kset.as_mut() {
-                // Copy-on-write, see comment in write_imp().
+                // Copy-on-write, see comment in write_entity().
                 let kset: &mut HashSet<Uid> = match Arc::get_mut(kset_ptr) {
                     Some(kset) => kset,
                     None => {

@@ -60,6 +60,23 @@ fn make_endpoint_spec<S: ToString>(endpoint_uid: &Uid, endpoint_name: S) -> Arc<
     })
 }
 
+fn make_stream_spec(stream_uid: &Uid) -> Arc<StreamSpec> {
+    Arc::new(StreamSpec {
+        stream_uri: format!("/test/{}", stream_uid),
+        stream_uid: *stream_uid,
+        source: ConnectionSpec::Endpoint {
+            connection_type: ConnectionType::Endpoint,
+            endpoint_uri: "test".into(),
+        },
+        destination: ConnectionSpec::External {
+            connection_type: ConnectionType::External,
+            media_uri: "test".into(),
+            repair_uri: "test".into(),
+            control_uri: "test".into(),
+        },
+    })
+}
+
 // Parent directories are not automatically created on open.
 #[tokio::test]
 async fn test_open_bad_path() {
@@ -536,4 +553,36 @@ async fn test_big_cache() {
     assert!(TOTAL_SIZE < CACHE_SIZE);
     assert_eq!(metrics.db_reads, 0); // every read was from cache
     assert_eq!(metrics.db_writes, TOTAL_SIZE as u64);
+}
+
+// Ensure all DTOs are supported.
+#[tokio::test]
+async fn test_dto_types() {
+    let (_temp_dir, vault) = make_temp_vault().await;
+
+    let endpoint_uid = make_uid("uid_1");
+    let endpoint_spec = make_endpoint_spec(&endpoint_uid, "endpoint_name");
+
+    let stream_uid = make_uid("uid_2");
+    let stream_spec = make_stream_spec(&stream_uid);
+
+    // write
+    assert_ok!(vault.write_endpoint(&endpoint_spec).await);
+    assert_ok!(vault.write_stream(&stream_spec).await);
+
+    // read
+    assert_eq!(*vault.read_endpoint(&endpoint_uid).await.unwrap(), *endpoint_spec);
+    assert_eq!(*vault.read_stream(&stream_uid).await.unwrap(), *stream_spec);
+
+    // list
+    assert_eq!(*vault.list_endpoints().await.unwrap(), HashSet::from([endpoint_uid]));
+    assert_eq!(*vault.list_streams().await.unwrap(), HashSet::from([stream_uid]));
+
+    // remove
+    assert_ok!(vault.remove_endpoint(&endpoint_uid).await);
+    assert_ok!(vault.remove_stream(&stream_uid).await);
+
+    // list
+    assert_eq!(*vault.list_endpoints().await.unwrap(), HashSet::new());
+    assert_eq!(*vault.list_streams().await.unwrap(), HashSet::new());
 }
