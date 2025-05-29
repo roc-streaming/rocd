@@ -10,7 +10,7 @@ use crate::test_server::Server;
 use reqwest::StatusCode;
 
 #[tokio::test]
-async fn test_endpoint_list() {
+async fn test_list_endpoints() {
     let server = Server::new();
     let client = Client::new(server.url());
 
@@ -32,6 +32,36 @@ async fn test_endpoint_list() {
                 display_name: "Display Name".into(),
                 system_name: "system_name".into(),
             }],
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_read_endpoint() {
+    let server = Server::new();
+    let client = Client::new(server.url());
+
+    {
+        // GET /peers/{peer_uid}/endpoints/{endpoint_uid}
+        let resp = client
+            .read_endpoint("111111-222222-333333", "444444-555555-666666")
+            .await
+            .unwrap();
+
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(
+            resp.into_inner(),
+            EndpointSpec {
+                endpoint_uri: "/peers/111111-222222-333333/endpoints/444444-555555-666666"
+                    .into(),
+                peer_uid: "111111-222222-333333".into(),
+                endpoint_uid: "444444-555555-666666".into(),
+                endpoint_type: EndpointType::SystemDevice,
+                stream_direction: EndpointDir::Output,
+                driver: EndpointDriver::Pipewire,
+                display_name: "Display Name".into(),
+                system_name: "system_name".into(),
+            },
         );
     }
 }
