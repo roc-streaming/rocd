@@ -137,10 +137,8 @@ components:
             type: string
           control_uri:
             type: string
-      title: ConnectionSpec
     ConnectionType:
       type: string
-      title: ConnectionType
       enum:
       - endpoint
       - external
@@ -189,7 +187,6 @@ components:
       - streaming_device
     StreamSpec:
       type: object
-      title: StreamSpec
       required:
       - stream_uri
       - stream_uid

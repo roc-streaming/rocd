@@ -1,6 +1,6 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-use crate::dto::error::ValidationError;
+use crate::dto::validate::*;
 
 use rand::RngCore;
 use regex_static::static_regex;

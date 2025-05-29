@@ -246,8 +246,11 @@ impl Vault {
         &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &Uid, value: &Arc<T>,
     ) -> Result<()>
     where
-        T: Serialize + Sync + Send + Debug + 'static,
+        T: Serialize + Validate + Sync + Send + Debug + 'static,
     {
+        // Refuse to save invalid values.
+        value.validate()?;
+
         // Serialize writes to ensure that cache and db updates from concurrent writes
         // won't overlap and create a mess. Db backend anyway supports only one
         // concurrent write, so we don't make it worse.

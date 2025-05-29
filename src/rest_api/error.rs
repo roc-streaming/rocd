@@ -8,6 +8,7 @@ use axum::response::IntoResponse;
 use std::io;
 use tokio::task::JoinError;
 
+/// Errors returned from server methods.
 #[derive(thiserror::Error, Debug)]
 pub enum ServerError {
     #[error("bad state")]
@@ -23,6 +24,8 @@ pub enum ServerError {
     TokioError(#[source] JoinError),
 }
 
+/// Errors returned from API handlers.
+/// Axum will automatically translate it to HTTP response using IntoResponse.
 #[derive(thiserror::Error, Debug)]
 pub enum HandlerError {
     #[error("{0}")]

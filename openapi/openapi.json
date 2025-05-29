@@ -223,12 +223,10 @@
               }
             }
           }
-        ],
-        "title": "ConnectionSpec"
+        ]
       },
       "ConnectionType": {
         "type": "string",
-        "title": "ConnectionType",
         "enum": [
           "endpoint",
           "external"
@@ -296,7 +294,6 @@
       },
       "StreamSpec": {
         "type": "object",
-        "title": "StreamSpec",
         "required": [
           "stream_uri",
           "stream_uid",

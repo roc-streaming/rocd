@@ -43,7 +43,6 @@ pub mod types {
     ///
     /// ```json
     ///{
-    ///  "title": "ConnectionSpec",
     ///  "oneOf": [
     ///    {
     ///      "type": "object",
@@ -112,7 +111,6 @@ pub mod types {
     ///
     /// ```json
     ///{
-    ///  "title": "ConnectionType",
     ///  "type": "string",
     ///  "enum": [
     ///    "endpoint",
@@ -499,7 +497,6 @@ pub mod types {
     ///
     /// ```json
     ///{
-    ///  "title": "StreamSpec",
     ///  "type": "object",
     ///  "required": [
     ///    "destination",
