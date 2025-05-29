@@ -15,16 +15,17 @@ async fn test_endpoint_list() {
     let client = Client::new(server.url());
 
     {
-        // GET /peers/self/endpoints
-        let resp = client.list_endpoints("self".into()).await.unwrap();
+        // GET /peers/{peer_uid}/endpoints
+        let resp = client.list_endpoints("111111-222222-333333").await.unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
             resp.into_inner(),
             vec![EndpointSpec {
-                endpoint_uri: "/peers/11-22-33/endpoints/44-55-66".into(),
-                peer_uid: "11-22-33".into(),
-                endpoint_uid: "44-55-66".into(),
+                endpoint_uri: "/peers/111111-222222-333333/endpoints/444444-555555-666666"
+                    .into(),
+                peer_uid: "111111-222222-333333".into(),
+                endpoint_uid: "444444-555555-666666".into(),
                 endpoint_type: EndpointType::SystemDevice,
                 stream_direction: EndpointDir::Output,
                 driver: EndpointDriver::Pipewire,

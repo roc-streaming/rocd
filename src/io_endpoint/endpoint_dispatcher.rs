@@ -11,15 +11,21 @@ impl EndpointDispatcher {
         EndpointDispatcher {}
     }
 
-    pub async fn get_all(&self, _peer_uid: &str) -> Vec<EndpointSpec> {
-        vec![self.get_endpoint("11-22-33", "44-55-66").await]
+    pub async fn get_all(&self, _peer_uid: &Uid) -> Vec<EndpointSpec> {
+        vec![
+            self.get_endpoint(
+                &Uid::parse("111111-222222-333333").unwrap(),
+                &Uid::parse("444444-555555-666666").unwrap(),
+            )
+            .await,
+        ]
     }
 
-    pub async fn get_endpoint(&self, peer_uid: &str, endpoint_uid: &str) -> EndpointSpec {
+    pub async fn get_endpoint(&self, peer_uid: &Uid, endpoint_uid: &Uid) -> EndpointSpec {
         EndpointSpec {
             endpoint_uri: format!("/peers/{peer_uid}/endpoints/{endpoint_uid}"),
-            peer_uid: peer_uid.into(),
-            endpoint_uid: endpoint_uid.into(),
+            peer_uid: *peer_uid,
+            endpoint_uid: *endpoint_uid,
             endpoint_type: EndpointType::SystemDevice,
             stream_direction: EndpointDir::Output,
             driver: EndpointDriver::Pipewire,

@@ -5,7 +5,7 @@ mod error;
 #[cfg(test)]
 mod tests;
 
-use crate::dto::EndpointSpec;
+use crate::dto::*;
 use crate::vault::db::{Db, Table};
 pub use crate::vault::error::VaultError;
 
@@ -81,13 +81,13 @@ struct MemCache<T> {
     /// LRU cache with the most used subset of entries present in DB.
     /// quick-cache will automatically remove least used entries when
     /// cache size exceeds configured limit.
-    kvmap: Cache<String, Arc<T>>,
+    kvmap: Cache<Uid, Arc<T>>,
 
     /// Lazy-initialized list of all keys present in DB.
     /// Empty until the first list_imp() call.
     /// After it becomes not-empty, write_imp() and remove_imp(), maintain it up-to-date.
     /// Lazy initialization allows faster startup time.
-    kset: Option<Arc<HashSet<String>>>,
+    kset: Option<Arc<HashSet<Uid>>>,
 }
 
 impl Vault {
@@ -133,17 +133,14 @@ impl Vault {
     /// List all endpoint UIDs.
     /// First call will read the list from DB, subsequent calls will
     /// return value from memory.
-    pub async fn list_endpoints(&self) -> Result<Arc<HashSet<String>>> {
+    pub async fn list_endpoints(&self) -> Result<Arc<HashSet<Uid>>> {
         self.list_imp(db::ENDPOINT_TABLE, &self.endpoint_cache).await
     }
 
     /// Read endpoint by UID.
     /// Returns value from in-memory cache if present, otherwise
     /// reads from DB and updates cache.
-    pub async fn read_endpoint(&self, uid: &str) -> Result<Arc<EndpointSpec>> {
-        if uid.is_empty() {
-            return Err(VaultError::InvalidArgument("empty uid"));
-        }
+    pub async fn read_endpoint(&self, uid: &Uid) -> Result<Arc<EndpointSpec>> {
         self.read_imp(db::ENDPOINT_TABLE, &self.endpoint_cache, uid).await
     }
 
@@ -151,9 +148,6 @@ impl Vault {
     /// Updates both in-memory cache and DB.
     /// Blocks until DB transaction is completed.
     pub async fn write_endpoint(&self, endpoint: &Arc<EndpointSpec>) -> Result<()> {
-        if endpoint.endpoint_uid.is_empty() {
-            return Err(VaultError::InvalidArgument("empty endpoint.uid"));
-        }
         self.write_imp(
             db::ENDPOINT_TABLE,
             &self.endpoint_cache,
@@ -166,17 +160,14 @@ impl Vault {
     /// Remove endpoint.
     /// Updates both in-memory cache and DB.
     /// Blocks until DB transaction is completed.
-    pub async fn remove_endpoint(&self, uid: &str) -> Result<()> {
-        if uid.is_empty() {
-            return Err(VaultError::InvalidArgument("empty uid"));
-        }
+    pub async fn remove_endpoint(&self, uid: &Uid) -> Result<()> {
         self.remove_imp(db::ENDPOINT_TABLE, &self.endpoint_cache, uid).await
     }
 
     /// Generic list implementation.
     async fn list_imp<T>(
         &self, table: Table, cache: &RwLock<MemCache<T>>,
-    ) -> Result<Arc<HashSet<String>>> {
+    ) -> Result<Arc<HashSet<Uid>>> {
         // Fast path: keyset already initialized.
         {
             let rlocked_cache = cache.read().await;
@@ -187,7 +178,7 @@ impl Vault {
         }
 
         // Slow path: read keyset from db.
-        let kset: Arc<HashSet<String>> = self.db.list_entries(table).await?;
+        let kset: Arc<HashSet<Uid>> = self.db.list_entries(table).await?;
 
         {
             let mut wlocked_cache = cache.write().await;
@@ -206,7 +197,7 @@ impl Vault {
 
     /// Generic read implementation for type T.
     async fn read_imp<T>(
-        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &str,
+        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &Uid,
     ) -> Result<Arc<T>>
     where
         T: DeserializeOwned + Sync + Send + Debug + 'static,
@@ -243,7 +234,7 @@ impl Vault {
                 self.cache_drops.fetch_add(1, Ordering::SeqCst);
                 return Ok(other_value);
             }
-            wlocked_cache.kvmap.insert(uid.to_string(), Arc::clone(&value));
+            wlocked_cache.kvmap.insert(*uid, Arc::clone(&value));
         }
 
         self.cache_misses.fetch_add(1, Ordering::SeqCst);
@@ -252,7 +243,7 @@ impl Vault {
 
     /// Generic write implementation for type T.
     async fn write_imp<T>(
-        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &str, value: &Arc<T>,
+        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &Uid, value: &Arc<T>,
     ) -> Result<()>
     where
         T: Serialize + Sync + Send + Debug + 'static,
@@ -265,21 +256,21 @@ impl Vault {
         // Write to memory cache.
         {
             let mut wlocked_cache = cache.write().await;
-            wlocked_cache.kvmap.insert(uid.to_string(), Arc::clone(value));
+            wlocked_cache.kvmap.insert(*uid, Arc::clone(value));
 
             // If keyset is already lazy-initialized, update it.
             if let Some(kset_ptr) = wlocked_cache.kset.as_mut() {
                 // Copy-on-write: make_mut() will clone hashset if someone outside holds
                 // another pointer to it. Hence we can safely modify the keyset, while
                 // ARCs returned outside will remain immutable.
-                let kset: &mut HashSet<String> = match Arc::get_mut(kset_ptr) {
+                let kset: &mut HashSet<Uid> = match Arc::get_mut(kset_ptr) {
                     Some(kset) => kset,
                     None => {
                         self.cache_cows.fetch_add(1, Ordering::SeqCst);
                         Arc::make_mut(kset_ptr)
                     },
                 };
-                kset.insert(uid.to_string());
+                kset.insert(*uid);
             }
         }
 
@@ -291,7 +282,7 @@ impl Vault {
 
     /// Generic delete implementation.
     async fn remove_imp<T>(
-        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &str,
+        &self, table: Table, cache: &RwLock<MemCache<T>>, uid: &Uid,
     ) -> Result<()>
     where
         T: Sync + Send + 'static,
@@ -313,7 +304,7 @@ impl Vault {
             // If keyset is already lazy-initialized, update it.
             if let Some(kset_ptr) = wlocked_cache.kset.as_mut() {
                 // Copy-on-write, see comment in write_imp().
-                let kset: &mut HashSet<String> = match Arc::get_mut(kset_ptr) {
+                let kset: &mut HashSet<Uid> = match Arc::get_mut(kset_ptr) {
                     Some(kset) => kset,
                     None => {
                         self.cache_cows.fetch_add(1, Ordering::SeqCst);

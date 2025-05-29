@@ -1,5 +1,7 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
+use crate::dto::uid::*;
+
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -8,7 +10,8 @@ use utoipa::ToSchema;
 pub struct StreamSpec {
     pub stream_uri: String,
 
-    pub stream_uid: String,
+    #[schema(value_type = String)]
+    pub stream_uid: Uid,
 
     pub source: ConnectionSpec,
     pub destination: ConnectionSpec,

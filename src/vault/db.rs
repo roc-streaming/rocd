@@ -1,5 +1,6 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
+use crate::dto::Uid;
 use crate::vault::error::VaultError;
 
 use redb::{Database, TableDefinition, TableHandle};
@@ -93,12 +94,12 @@ impl Db {
     /// Obtain list of table keys (UIDs).
     pub async fn list_entries(
         self: &Arc<Self>, table_definition: Table,
-    ) -> Result<Arc<HashSet<String>>> {
+    ) -> Result<Arc<HashSet<Uid>>> {
         // run blocking read on background thread
         let task_result = task::spawn_blocking({
             let self_clone = Arc::clone(self);
 
-            move || -> Result<Arc<HashSet<String>>> {
+            move || -> Result<Arc<HashSet<Uid>>> {
                 let transaction = self_clone.handle.begin_read()?;
 
                 let table = match transaction.open_table(table_definition) {
@@ -113,12 +114,14 @@ impl Db {
                     table.range::<&str>(..).map_err(|err| VaultError::ReadError(err))?;
 
                 let uids = iter
-                    .map(|elem| -> Result<String> {
+                    .map(|elem| -> Result<Uid> {
                         let (key_guard, _value_guard) =
                             elem.map_err(|err| VaultError::ReadError(err))?;
-                        Ok(key_guard.value().to_string())
+                        let uid = Uid::parse(key_guard.value())
+                            .map_err(|err| VaultError::ValidationError(err))?;
+                        Ok(uid)
                     })
-                    .collect::<Result<HashSet<String>>>()?;
+                    .collect::<Result<HashSet<Uid>>>()?;
 
                 tracing::debug!(
                     "table '{}': list: found {} uid(s)",
@@ -134,7 +137,7 @@ impl Db {
         .unwrap(); // panic if tokio failed to run task
 
         // get uids from db or propagate error
-        let uids: Arc<HashSet<String>> = task_result?;
+        let uids: Arc<HashSet<Uid>> = task_result?;
 
         Ok(uids)
     }
@@ -142,17 +145,15 @@ impl Db {
     /// Read entry of type T from given DB table.
     /// DB holds raw bytes, entry is deserialized using messagepack.
     pub async fn read_entry<T>(
-        self: &Arc<Self>, table_definition: Table, uid: &str,
+        self: &Arc<Self>, table_definition: Table, uid: &Uid,
     ) -> Result<Arc<T>>
     where
         T: DeserializeOwned + Sync + Send + Debug + 'static,
     {
-        assert!(!uid.is_empty());
-
         // run blocking read on background thread
         let task_result = task::spawn_blocking({
             let self_clone = Arc::clone(self);
-            let uid = uid.to_string();
+            let uid = *uid;
 
             move || -> Result<Arc<T>> {
                 let transaction = self_clone.handle.begin_read()?;
@@ -197,18 +198,16 @@ impl Db {
     /// Write entry of type T to given DB table.
     /// DB holds raw bytes, entry is serialized using messagepack.
     pub async fn write_entry<T>(
-        self: &Arc<Self>, table_definition: Table, uid: &str, value: &Arc<T>,
+        self: &Arc<Self>, table_definition: Table, uid: &Uid, value: &Arc<T>,
     ) -> Result<()>
     where
         T: Serialize + Sync + Send + Debug + 'static,
     {
-        assert!(!uid.is_empty());
-
         // run blocking read on background thwrite
         let task_result = task::spawn_blocking({
             let self_clone = Arc::clone(self);
             let value = Arc::clone(value);
-            let uid = uid.to_string();
+            let uid = *uid;
 
             move || -> Result<()> {
                 let transaction = self_clone.handle.begin_write()?;
@@ -249,14 +248,12 @@ impl Db {
 
     /// Remove entry from given DB table.
     pub async fn remove_entry(
-        self: &Arc<Self>, table_definition: Table, uid: &str,
+        self: &Arc<Self>, table_definition: Table, uid: &Uid,
     ) -> Result<()> {
-        assert!(!uid.is_empty());
-
         // run blocking read on background thwrite
         let task_result = task::spawn_blocking({
             let self_clone = Arc::clone(self);
-            let uid = uid.to_string();
+            let uid = *uid;
 
             move || -> Result<()> {
                 let transaction = self_clone.handle.begin_write()?;

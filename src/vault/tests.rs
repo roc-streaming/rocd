@@ -41,19 +41,22 @@ async fn make_temp_vault() -> (TempDir, Vault) {
     (temp_dir, vault)
 }
 
-fn make_endpoint_spec<S: Into<String>>(uid: S, name: S) -> Arc<EndpointSpec> {
-    let uid: String = uid.into();
-    let name: String = name.into();
+fn make_uid<S: ToString>(name: S) -> Uid {
+    Uid::generate_reproducible(module_path!(), &name.to_string())
+}
+
+fn make_endpoint_spec<S: ToString>(endpoint_uid: &Uid, endpoint_name: S) -> Arc<EndpointSpec> {
+    let endpoint_name = endpoint_name.to_string();
 
     Arc::new(EndpointSpec {
-        endpoint_uri: format!("/test/{}", uid),
-        peer_uid: "test".into(),
-        endpoint_uid: uid,
+        endpoint_uri: format!("/test/{}", endpoint_uid),
+        peer_uid: make_uid("test_peer"),
+        endpoint_uid: *endpoint_uid,
         endpoint_type: EndpointType::SystemDevice,
         stream_direction: EndpointDir::Output,
         driver: EndpointDriver::Pipewire,
         display_name: "Test Name".into(),
-        system_name: name,
+        system_name: endpoint_name,
     })
 }
 
@@ -184,84 +187,96 @@ async fn test_open_locked_two_processes() {
 async fn test_read_write() {
     let (_temp_dir, vault) = make_temp_vault().await;
 
-    assert_matches!(vault.read_endpoint("uid_1").await, Err(VaultError::UidNotFound(_)));
-    assert_matches!(vault.read_endpoint("uid_2").await, Err(VaultError::UidNotFound(_)));
+    let uid_1 = make_uid("uid_1");
+    let uid_2 = make_uid("uid_2");
 
-    let endpoint_1 = make_endpoint_spec("uid_1", "name_1");
-    let endpoint_2 = make_endpoint_spec("uid_2", "name_2");
+    assert_matches!(vault.read_endpoint(&uid_1).await, Err(VaultError::UidNotFound(_)));
+    assert_matches!(vault.read_endpoint(&uid_2).await, Err(VaultError::UidNotFound(_)));
+
+    let endpoint_1 = make_endpoint_spec(&uid_1, "name_1");
+    let endpoint_2 = make_endpoint_spec(&uid_2, "name_2");
     assert!(*endpoint_1 != *endpoint_2);
 
     assert_ok!(vault.write_endpoint(&endpoint_1).await);
-    assert_eq!(*vault.read_endpoint("uid_1").await.unwrap(), *endpoint_1);
-    assert_matches!(vault.read_endpoint("uid_2").await, Err(VaultError::UidNotFound(_)));
+    assert_eq!(*vault.read_endpoint(&uid_1).await.unwrap(), *endpoint_1);
+    assert_matches!(vault.read_endpoint(&uid_2).await, Err(VaultError::UidNotFound(_)));
 
     assert_ok!(vault.write_endpoint(&endpoint_2).await);
-    assert_eq!(*vault.read_endpoint("uid_1").await.unwrap(), *endpoint_1);
-    assert_eq!(*vault.read_endpoint("uid_2").await.unwrap(), *endpoint_2);
+    assert_eq!(*vault.read_endpoint(&uid_1).await.unwrap(), *endpoint_1);
+    assert_eq!(*vault.read_endpoint(&uid_2).await.unwrap(), *endpoint_2);
 }
 
 #[tokio::test]
 async fn test_overwrite() {
     let (_temp_dir, vault) = make_temp_vault().await;
 
-    assert_matches!(vault.read_endpoint("uid_1").await, Err(VaultError::UidNotFound(_)));
-    assert_matches!(vault.read_endpoint("uid_2").await, Err(VaultError::UidNotFound(_)));
+    let uid_1 = make_uid("uid_1");
+    let uid_2 = make_uid("uid_2");
 
-    let endpoint_1_a = make_endpoint_spec("uid_1", "name_1_a");
-    let endpoint_1_b = make_endpoint_spec("uid_1", "name_1_b"); // same uid
+    assert_matches!(vault.read_endpoint(&uid_1).await, Err(VaultError::UidNotFound(_)));
+    assert_matches!(vault.read_endpoint(&uid_2).await, Err(VaultError::UidNotFound(_)));
+
+    let endpoint_1_a = make_endpoint_spec(&uid_1, "name_1_a");
+    let endpoint_1_b = make_endpoint_spec(&uid_1, "name_1_b"); // same uid
     assert!(*endpoint_1_a != *endpoint_1_b);
 
     assert_ok!(vault.write_endpoint(&endpoint_1_a).await);
-    assert_eq!(*vault.read_endpoint("uid_1").await.unwrap(), *endpoint_1_a);
+    assert_eq!(*vault.read_endpoint(&uid_1).await.unwrap(), *endpoint_1_a);
 
     assert_ok!(vault.write_endpoint(&endpoint_1_b).await);
-    assert_eq!(*vault.read_endpoint("uid_1").await.unwrap(), *endpoint_1_b);
+    assert_eq!(*vault.read_endpoint(&uid_1).await.unwrap(), *endpoint_1_b);
 }
 
 #[tokio::test]
 async fn test_remove() {
     let (_temp_dir, vault) = make_temp_vault().await;
 
-    assert_matches!(vault.read_endpoint("uid_1").await, Err(VaultError::UidNotFound(_)));
-    assert_matches!(vault.read_endpoint("uid_2").await, Err(VaultError::UidNotFound(_)));
+    let uid_1 = make_uid("uid_1");
+    let uid_2 = make_uid("uid_2");
 
-    let endpoint_1 = make_endpoint_spec("uid_1", "name_1");
-    let endpoint_2 = make_endpoint_spec("uid_2", "name_2");
+    assert_matches!(vault.read_endpoint(&uid_1).await, Err(VaultError::UidNotFound(_)));
+    assert_matches!(vault.read_endpoint(&uid_2).await, Err(VaultError::UidNotFound(_)));
+
+    let endpoint_1 = make_endpoint_spec(&uid_1, "name_1");
+    let endpoint_2 = make_endpoint_spec(&uid_2, "name_2");
 
     assert_ok!(vault.write_endpoint(&endpoint_1).await);
     assert_ok!(vault.write_endpoint(&endpoint_2).await);
 
-    assert_eq!(*vault.read_endpoint("uid_1").await.unwrap(), *endpoint_1);
-    assert_eq!(*vault.read_endpoint("uid_2").await.unwrap(), *endpoint_2);
+    assert_eq!(*vault.read_endpoint(&uid_1).await.unwrap(), *endpoint_1);
+    assert_eq!(*vault.read_endpoint(&uid_2).await.unwrap(), *endpoint_2);
 
-    assert_ok!(vault.remove_endpoint("uid_1").await);
-    assert_matches!(vault.read_endpoint("uid_1").await, Err(VaultError::UidNotFound(_)));
-    assert_eq!(*vault.read_endpoint("uid_2").await.unwrap(), *endpoint_2);
+    assert_ok!(vault.remove_endpoint(&uid_1).await);
+    assert_matches!(vault.read_endpoint(&uid_1).await, Err(VaultError::UidNotFound(_)));
+    assert_eq!(*vault.read_endpoint(&uid_2).await.unwrap(), *endpoint_2);
 
-    assert_ok!(vault.remove_endpoint("uid_2").await);
-    assert_matches!(vault.read_endpoint("uid_1").await, Err(VaultError::UidNotFound(_)));
-    assert_matches!(vault.read_endpoint("uid_2").await, Err(VaultError::UidNotFound(_)));
+    assert_ok!(vault.remove_endpoint(&uid_2).await);
+    assert_matches!(vault.read_endpoint(&uid_1).await, Err(VaultError::UidNotFound(_)));
+    assert_matches!(vault.read_endpoint(&uid_2).await, Err(VaultError::UidNotFound(_)));
 }
 
 #[tokio::test]
 async fn test_list() {
     let (_temp_dir, vault) = make_temp_vault().await;
 
+    let uid_1 = make_uid("uid_1");
+    let uid_2 = make_uid("uid_2");
+
     let endpoints = vault.list_endpoints().await.unwrap();
     assert_eq!(endpoints.len(), 0);
 
-    let endpoint_1 = make_endpoint_spec("uid_1", "name_1");
-    let endpoint_2 = make_endpoint_spec("uid_2", "name_2");
+    let endpoint_1 = make_endpoint_spec(&uid_1, "name_1");
+    let endpoint_2 = make_endpoint_spec(&uid_2, "name_2");
     assert_ok!(vault.write_endpoint(&endpoint_1).await);
     assert_ok!(vault.write_endpoint(&endpoint_2).await);
     let endpoints = vault.list_endpoints().await.unwrap();
-    assert_eq!(*endpoints, HashSet::from(["uid_1".to_string(), "uid_2".to_string()]));
+    assert_eq!(*endpoints, HashSet::from([uid_1, uid_2]));
 
-    assert_ok!(vault.remove_endpoint("uid_2").await);
+    assert_ok!(vault.remove_endpoint(&uid_2).await);
     let endpoints = vault.list_endpoints().await.unwrap();
-    assert_eq!(*endpoints, HashSet::from(["uid_1".to_string()]));
+    assert_eq!(*endpoints, HashSet::from([uid_1]));
 
-    assert_ok!(vault.remove_endpoint("uid_1").await);
+    assert_ok!(vault.remove_endpoint(&uid_1).await);
     let endpoints = vault.list_endpoints().await.unwrap();
     assert_eq!(endpoints.len(), 0);
 }
@@ -270,9 +285,12 @@ async fn test_list() {
 async fn test_reopen() {
     let temp_dir = make_temp_dir();
 
-    let endpoint_1 = make_endpoint_spec("uid_1", "name_1");
-    let endpoint_2_a = make_endpoint_spec("uid_2", "name_2_a");
-    let endpoint_2_b = make_endpoint_spec("uid_2", "name_2_b"); // same uid
+    let uid_1 = make_uid("uid_1");
+    let uid_2 = make_uid("uid_2");
+
+    let endpoint_1 = make_endpoint_spec(&uid_1, "name_1");
+    let endpoint_2_a = make_endpoint_spec(&uid_2, "name_2_a");
+    let endpoint_2_b = make_endpoint_spec(&uid_2, "name_2_b"); // same uid
 
     // Write and close DB.
     {
@@ -301,12 +319,12 @@ async fn test_reopen() {
         .unwrap();
 
         let endpoints = vault.list_endpoints().await.unwrap();
-        assert_eq!(*endpoints, HashSet::from(["uid_1".to_string(), "uid_2".to_string()]));
+        assert_eq!(*endpoints, HashSet::from([uid_1, uid_2]));
 
-        assert_eq!(*vault.read_endpoint("uid_1").await.unwrap(), *endpoint_1);
-        assert_eq!(*vault.read_endpoint("uid_2").await.unwrap(), *endpoint_2_a);
+        assert_eq!(*vault.read_endpoint(&uid_1).await.unwrap(), *endpoint_1);
+        assert_eq!(*vault.read_endpoint(&uid_2).await.unwrap(), *endpoint_2_a);
 
-        assert_ok!(vault.remove_endpoint("uid_1").await);
+        assert_ok!(vault.remove_endpoint(&uid_1).await);
         assert_ok!(vault.write_endpoint(&endpoint_2_b).await);
     }
 
@@ -322,10 +340,10 @@ async fn test_reopen() {
         .unwrap();
 
         let endpoints = vault.list_endpoints().await.unwrap();
-        assert_eq!(*endpoints, HashSet::from(["uid_2".to_string()]));
+        assert_eq!(*endpoints, HashSet::from([uid_2]));
 
-        assert_matches!(vault.read_endpoint("uid_1").await, Err(VaultError::UidNotFound(_)));
-        assert_eq!(*vault.read_endpoint("uid_2").await.unwrap(), *endpoint_2_b);
+        assert_matches!(vault.read_endpoint(&uid_1).await, Err(VaultError::UidNotFound(_)));
+        assert_eq!(*vault.read_endpoint(&uid_2).await.unwrap(), *endpoint_2_b);
     }
 }
 
@@ -334,18 +352,21 @@ async fn test_reopen() {
 async fn test_arc() {
     let (_temp_dir, vault) = make_temp_vault().await;
 
-    let endpoint_1 = make_endpoint_spec("uid_1", "name_1");
-    let endpoint_2_a = make_endpoint_spec("uid_2", "name_2_a");
-    let endpoint_2_b = make_endpoint_spec("uid_2", "name_2_b");
+    let uid_1 = make_uid("uid_1");
+    let uid_2 = make_uid("uid_2");
+
+    let endpoint_1 = make_endpoint_spec(&uid_1, "name_1");
+    let endpoint_2_a = make_endpoint_spec(&uid_2, "name_2_a");
+    let endpoint_2_b = make_endpoint_spec(&uid_2, "name_2_b");
 
     assert_ok!(vault.write_endpoint(&endpoint_1).await);
     assert_ok!(vault.write_endpoint(&endpoint_2_a).await);
 
-    assert!(Arc::ptr_eq(&vault.read_endpoint("uid_1").await.unwrap(), &endpoint_1));
-    assert!(Arc::ptr_eq(&vault.read_endpoint("uid_2").await.unwrap(), &endpoint_2_a));
+    assert!(Arc::ptr_eq(&vault.read_endpoint(&uid_1).await.unwrap(), &endpoint_1));
+    assert!(Arc::ptr_eq(&vault.read_endpoint(&uid_2).await.unwrap(), &endpoint_2_a));
 
     {
-        let mut endpoint_ptr: Arc<EndpointSpec> = vault.read_endpoint("uid_2").await.unwrap();
+        let mut endpoint_ptr: Arc<EndpointSpec> = vault.read_endpoint(&uid_2).await.unwrap();
 
         // Since vault also keeps a reference to the endpoint, make_mut() should
         // clone endpoint and reset endpoint_ptr to a new object.
@@ -357,12 +378,12 @@ async fn test_arc() {
     }
 
     // Endpoint 1 is same as before, because we haven't modified it.
-    assert!(Arc::ptr_eq(&vault.read_endpoint("uid_1").await.unwrap(), &endpoint_1));
+    assert!(Arc::ptr_eq(&vault.read_endpoint(&uid_1).await.unwrap(), &endpoint_1));
     // Endpoint 2 is a new pointer, because we've modified it, and entries are immutable.
-    assert!(!Arc::ptr_eq(&vault.read_endpoint("uid_1").await.unwrap(), &endpoint_2_a));
-    assert!(!Arc::ptr_eq(&vault.read_endpoint("uid_1").await.unwrap(), &endpoint_2_b));
+    assert!(!Arc::ptr_eq(&vault.read_endpoint(&uid_1).await.unwrap(), &endpoint_2_a));
+    assert!(!Arc::ptr_eq(&vault.read_endpoint(&uid_1).await.unwrap(), &endpoint_2_b));
     // Endpoint 2 points to a struct equal to endpoint_2_b.
-    assert_eq!(*vault.read_endpoint("uid_2").await.unwrap(), *endpoint_2_b);
+    assert_eq!(*vault.read_endpoint(&uid_2).await.unwrap(), *endpoint_2_b);
 }
 
 // Check reference counting and copy-on-write for entry list.
@@ -370,26 +391,30 @@ async fn test_arc() {
 async fn test_arc_list() {
     let (_temp_dir, vault) = make_temp_vault().await;
 
-    let endpoint_1 = make_endpoint_spec("uid_1", "name_1");
-    let endpoint_2 = make_endpoint_spec("uid_2", "name_2");
-    let endpoint_3 = make_endpoint_spec("uid_3", "name_3");
+    let uid_1 = make_uid("uid_1");
+    let uid_2 = make_uid("uid_2");
+    let uid_3 = make_uid("uid_3");
+
+    let endpoint_1 = make_endpoint_spec(&uid_1, "name_1");
+    let endpoint_2 = make_endpoint_spec(&uid_2, "name_2");
+    let endpoint_3 = make_endpoint_spec(&uid_3, "name_3");
 
     assert_ok!(vault.write_endpoint(&endpoint_1).await);
 
-    let endpoints_ptr_1: *const HashSet<String>;
+    let endpoints_ptr_1: *const HashSet<Uid>;
     {
         let endpoints = vault.list_endpoints().await.unwrap();
-        assert_eq!(*endpoints, HashSet::from(["uid_1".to_string()]));
+        assert_eq!(*endpoints, HashSet::from([uid_1]));
         endpoints_ptr_1 = Arc::as_ptr(&endpoints);
     }
 
     // Modify endpoint list without holding an Arc to the current list.
     assert_ok!(vault.write_endpoint(&endpoint_2).await);
 
-    let endpoints_ptr_2: *const HashSet<String>;
+    let endpoints_ptr_2: *const HashSet<Uid>;
     {
         let endpoints = vault.list_endpoints().await.unwrap();
-        assert_eq!(*endpoints, HashSet::from(["uid_1".to_string(), "uid_2".to_string()]));
+        assert_eq!(*endpoints, HashSet::from([uid_1, uid_2]));
         endpoints_ptr_2 = Arc::as_ptr(&endpoints);
     }
 
@@ -400,19 +425,16 @@ async fn test_arc_list() {
     let old_endpoints = vault.list_endpoints().await.unwrap();
     assert_ok!(vault.write_endpoint(&endpoint_3).await);
 
-    let endpoints_ptr_3: *const HashSet<String>;
+    let endpoints_ptr_3: *const HashSet<Uid>;
     {
         let endpoints = vault.list_endpoints().await.unwrap();
-        assert_eq!(
-            *endpoints,
-            HashSet::from(["uid_1".to_string(), "uid_2".to_string(), "uid_3".to_string()])
-        );
+        assert_eq!(*endpoints, HashSet::from([uid_1, uid_2, uid_3]));
         endpoints_ptr_3 = Arc::as_ptr(&endpoints);
     }
 
     // Since we were holding an Arc, a new hashset was allocated.
     assert!(!std::ptr::eq(endpoints_ptr_1, endpoints_ptr_3));
-    assert_eq!(*old_endpoints, HashSet::from(["uid_1".to_string(), "uid_2".to_string()]));
+    assert_eq!(*old_endpoints, HashSet::from([uid_1, uid_2]));
 }
 
 // How LRU cache works when cache is smaller than DB size.
@@ -436,7 +458,9 @@ async fn test_small_cache() {
 
     // Write TOTAL_SIZE endpoints.
     for n in 0..TOTAL_SIZE {
-        let endpoint = make_endpoint_spec(format!("uid_{n}"), format!("name_{n}"));
+        let uid = make_uid(format!("uid_{n}"));
+        let name = format!("name_{n}");
+        let endpoint = make_endpoint_spec(&uid, &name);
         assert_matches!(vault.write_endpoint(&endpoint).await, Ok(()));
     }
 
@@ -448,8 +472,10 @@ async fn test_small_cache() {
 
     // Read TOTAL_SIZE endpoints.
     for n in 0..TOTAL_SIZE {
-        let expected_endpoint = make_endpoint_spec(format!("uid_{n}"), format!("name_{n}"));
-        let actual_endpoint = vault.read_endpoint(format!("uid_{n}").as_str()).await.unwrap();
+        let uid = make_uid(format!("uid_{n}"));
+        let name = format!("name_{n}");
+        let expected_endpoint = make_endpoint_spec(&uid, &name);
+        let actual_endpoint = vault.read_endpoint(&uid).await.unwrap();
         assert_eq!(*expected_endpoint, *actual_endpoint);
     }
 
@@ -484,7 +510,9 @@ async fn test_big_cache() {
 
     // Write TOTAL_SIZE endpoints.
     for n in 0..TOTAL_SIZE {
-        let endpoint = make_endpoint_spec(format!("uid_{n}"), format!("name_{n}"));
+        let uid = make_uid(format!("uid_{n}"));
+        let name = format!("name_{n}");
+        let endpoint = make_endpoint_spec(&uid, &name);
         assert_matches!(vault.write_endpoint(&endpoint).await, Ok(()));
     }
 
@@ -496,8 +524,10 @@ async fn test_big_cache() {
 
     // Read TOTAL_SIZE endpoints.
     for n in 0..TOTAL_SIZE {
-        let expected_endpoint = make_endpoint_spec(format!("uid_{n}"), format!("name_{n}"));
-        let actual_endpoint = vault.read_endpoint(format!("uid_{n}").as_str()).await.unwrap();
+        let uid = make_uid(format!("uid_{n}"));
+        let name = format!("name_{n}");
+        let expected_endpoint = make_endpoint_spec(&uid, &name);
+        let actual_endpoint = vault.read_endpoint(&uid).await.unwrap();
         assert_eq!(*expected_endpoint, *actual_endpoint);
     }
 

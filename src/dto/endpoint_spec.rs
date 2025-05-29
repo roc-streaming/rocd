@@ -1,5 +1,7 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
+use crate::dto::uid::*;
+
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -7,8 +9,10 @@ use utoipa::ToSchema;
 pub struct EndpointSpec {
     pub endpoint_uri: String,
 
-    pub peer_uid: String,
-    pub endpoint_uid: String,
+    #[schema(value_type = String)]
+    pub peer_uid: Uid,
+    #[schema(value_type = String)]
+    pub endpoint_uid: Uid,
 
     pub endpoint_type: EndpointType,
     pub stream_direction: EndpointDir,

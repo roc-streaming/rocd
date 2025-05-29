@@ -1,8 +1,8 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-use thiserror::Error;
+use crate::dto::{Uid, ValidationError};
 
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum VaultError {
     #[error("can't open db: {0}")]
     DatabaseError(#[from] redb::DatabaseError),
@@ -28,9 +28,12 @@ pub enum VaultError {
     #[error("can't encode value: {0}")]
     EncodeError(#[from] rmp_serde::encode::Error),
 
+    #[error("invalid value: {0}")]
+    ValidationError(#[from] ValidationError),
+
     #[error("invalid argument: {0}")]
     InvalidArgument(&'static str),
 
     #[error("uid not found: {0}")]
-    UidNotFound(String),
+    UidNotFound(Uid),
 }

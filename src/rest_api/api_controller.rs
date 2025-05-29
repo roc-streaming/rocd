@@ -3,10 +3,11 @@
 use crate::dto::*;
 use crate::io_endpoint::EndpointDispatcher;
 use crate::io_stream::StreamDispatcher;
+use crate::rest_api::error::*;
 
 use axum::Router;
 use axum::extract::{Extension, Json, Path};
-use axum::http::StatusCode;
+use std::result;
 use std::sync::Arc;
 use utoipa::OpenApi as _;
 use utoipa::openapi::OpenApi;
@@ -52,6 +53,8 @@ impl ApiController {
 #[openapi(info(title = "rocd REST API",))]
 struct ApiDoc;
 
+type Result<T> = result::Result<T, HandlerError>;
+
 // endpoints
 
 #[utoipa::path(
@@ -63,8 +66,10 @@ struct ApiDoc;
 )]
 async fn list_endpoints(
     Extension(controller): Extension<Arc<ApiController>>, Path(peer_uid): Path<String>,
-) -> (StatusCode, Json<Vec<EndpointSpec>>) {
-    (StatusCode::OK, Json(controller.endpoint_dispatcher.get_all(&peer_uid).await))
+) -> Result<Json<Vec<EndpointSpec>>> {
+    let peer_uid = Uid::parse(&peer_uid)?;
+
+    Ok(Json(controller.endpoint_dispatcher.get_all(&peer_uid).await))
 }
 
 #[utoipa::path(
@@ -77,11 +82,11 @@ async fn list_endpoints(
 async fn read_endpoint(
     Extension(controller): Extension<Arc<ApiController>>,
     Path((peer_uid, endpoint_uid)): Path<(String, String)>,
-) -> (StatusCode, Json<EndpointSpec>) {
-    (
-        StatusCode::OK,
-        Json(controller.endpoint_dispatcher.get_endpoint(&peer_uid, &endpoint_uid).await),
-    )
+) -> Result<Json<EndpointSpec>> {
+    let peer_uid = Uid::parse(&peer_uid)?;
+    let endpoint_uid = Uid::parse(&endpoint_uid)?;
+
+    Ok(Json(controller.endpoint_dispatcher.get_endpoint(&peer_uid, &endpoint_uid).await))
 }
 
 #[utoipa::path(
@@ -94,11 +99,11 @@ async fn read_endpoint(
 async fn update_endpoint(
     Extension(controller): Extension<Arc<ApiController>>,
     Path((peer_uid, endpoint_uid)): Path<(String, String)>,
-) -> (StatusCode, Json<EndpointSpec>) {
-    (
-        StatusCode::OK,
-        Json(controller.endpoint_dispatcher.get_endpoint(&peer_uid, &endpoint_uid).await),
-    )
+) -> Result<Json<EndpointSpec>> {
+    let peer_uid = Uid::parse(&peer_uid)?;
+    let endpoint_uid = Uid::parse(&endpoint_uid)?;
+
+    Ok(Json(controller.endpoint_dispatcher.get_endpoint(&peer_uid, &endpoint_uid).await))
 }
 
 // streams
@@ -112,8 +117,8 @@ async fn update_endpoint(
 )]
 async fn list_streams(
     Extension(controller): Extension<Arc<ApiController>>,
-) -> (StatusCode, Json<Vec<StreamSpec>>) {
-    (StatusCode::OK, Json(controller.stream_dispatcher.get_all().await))
+) -> Result<Json<Vec<StreamSpec>>> {
+    Ok(Json(controller.stream_dispatcher.get_all().await))
 }
 
 #[utoipa::path(
@@ -125,8 +130,10 @@ async fn list_streams(
 )]
 async fn read_stream(
     Extension(controller): Extension<Arc<ApiController>>, Path(stream_uid): Path<String>,
-) -> (StatusCode, Json<StreamSpec>) {
-    (StatusCode::OK, Json(controller.stream_dispatcher.get_stream(&stream_uid).await))
+) -> Result<Json<StreamSpec>> {
+    let stream_uid = Uid::parse(&stream_uid)?;
+
+    Ok(Json(controller.stream_dispatcher.get_stream(&stream_uid).await))
 }
 
 #[utoipa::path(
@@ -138,6 +145,8 @@ async fn read_stream(
 )]
 async fn update_stream(
     Extension(controller): Extension<Arc<ApiController>>, Path(stream_uid): Path<String>,
-) -> (StatusCode, Json<StreamSpec>) {
-    (StatusCode::OK, Json(controller.stream_dispatcher.get_stream(&stream_uid).await))
+) -> Result<Json<StreamSpec>> {
+    let stream_uid = Uid::parse(&stream_uid)?;
+
+    Ok(Json(controller.stream_dispatcher.get_stream(&stream_uid).await))
 }

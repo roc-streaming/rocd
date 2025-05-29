@@ -4,7 +4,7 @@ use crate::io_endpoint::EndpointDispatcher;
 use crate::io_stream::StreamDispatcher;
 use crate::rest_api::api_controller::ApiController;
 use crate::rest_api::doc_controller::DocController;
-use crate::rest_api::error::RestError;
+use crate::rest_api::error::ServerError;
 
 use axum::extract::Request;
 use axum::{Router, ServiceExt};
@@ -19,7 +19,7 @@ use tower::Layer;
 use tower_http::normalize_path::NormalizePathLayer;
 use tower_http::trace::TraceLayer;
 
-type Result<T> = result::Result<T, RestError>;
+type Result<T> = result::Result<T, ServerError>;
 
 type ServerHandle = axum_server::Handle;
 type TaskHandle = tokio::task::JoinHandle<io::Result<()>>;
@@ -97,16 +97,16 @@ impl RestServer {
     pub async fn start(self: &Arc<Self>, addr: SocketAddr) -> Result<SocketAddr> {
         let mut locked_state = self.state.lock().await;
 
-        let router = locked_state.router.take().ok_or(RestError::StateError)?;
+        let router = locked_state.router.take().ok_or(ServerError::StateError)?;
 
         let tcp_listener = TcpListener::bind(addr)
             .await
-            .map_err(|err| RestError::BindError(err))?
+            .map_err(|err| ServerError::BindError(err))?
             .into_std()
-            .map_err(|err| RestError::BindError(err))?;
+            .map_err(|err| ServerError::BindError(err))?;
 
         let resolved_addr =
-            tcp_listener.local_addr().map_err(|err| RestError::BindError(err))?;
+            tcp_listener.local_addr().map_err(|err| ServerError::BindError(err))?;
 
         tracing::info!("starting server at http://{} ...", resolved_addr);
 
@@ -152,13 +152,13 @@ impl RestServer {
             let mut locked_state = self.state.lock().await;
             locked_state.task_handle.take()
         }
-        .ok_or(RestError::StateError)?;
+        .ok_or(ServerError::StateError)?;
 
         tracing::debug!("waiting server");
         task_handle
             .await
-            .map_err(|err| RestError::TokioError(err))?
-            .map_err(|err| RestError::ServeError(err))?;
+            .map_err(|err| ServerError::TokioError(err))?
+            .map_err(|err| ServerError::ServeError(err))?;
 
         Ok(())
     }
