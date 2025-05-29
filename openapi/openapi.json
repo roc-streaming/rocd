@@ -187,6 +187,7 @@
         "oneOf": [
           {
             "type": "object",
+            "title": "EndpointConnection",
             "required": [
               "connection_type",
               "endpoint_uri"
@@ -202,6 +203,7 @@
           },
           {
             "type": "object",
+            "title": "ExternalConnection",
             "required": [
               "connection_type",
               "media_uri",

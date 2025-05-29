@@ -17,18 +17,20 @@ impl StreamDispatcher {
 
     pub async fn get_stream(&self, stream_uid: &Uid) -> StreamSpec {
         StreamSpec {
-            stream_uri: format!("/streams/{stream_uid}"),
+            stream_uri: Uri::from_stream(stream_uid),
             stream_uid: *stream_uid,
             source: ConnectionSpec::Endpoint {
                 connection_type: ConnectionType::Endpoint,
-                endpoint_uri: "/peers/111111-222222-333333/endpoints/444444-555555-666666"
-                    .into(),
+                endpoint_uri: Uri::from_endpoint(
+                    &Uid::parse("111111-222222-333333").unwrap(),
+                    &Uid::parse("444444-555555-666666").unwrap(),
+                ),
             },
             destination: ConnectionSpec::External {
                 connection_type: ConnectionType::External,
-                media_uri: "rtp+rs8m://192.168.0.101:10000".into(),
-                repair_uri: "rs8m://192.168.0.101:10001".into(),
-                control_uri: "rtcp://192.168.0.101:10002".into(),
+                media_uri: Uri::parse("rtp+rs8m://192.168.0.101:10000").unwrap(),
+                repair_uri: Uri::parse("rs8m://192.168.0.101:10001").unwrap(),
+                control_uri: Uri::parse("rtcp://192.168.0.101:10002").unwrap(),
             },
         }
     }

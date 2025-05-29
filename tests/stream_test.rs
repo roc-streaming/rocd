@@ -24,12 +24,12 @@ async fn test_list_streams() {
             vec![StreamSpec {
                 stream_uri: "/streams/777777-888888-999999".into(),
                 stream_uid: "777777-888888-999999".into(),
-                source: ConnectionSpec::Variant0 {
+                source: ConnectionSpec::EndpointConnection {
                     connection_type: ConnectionType::Endpoint,
                     endpoint_uri: "/peers/111111-222222-333333/endpoints/444444-555555-666666"
                         .into(),
                 },
-                destination: ConnectionSpec::Variant1 {
+                destination: ConnectionSpec::ExternalConnection {
                     connection_type: ConnectionType::External,
                     media_uri: "rtp+rs8m://192.168.0.101:10000".into(),
                     repair_uri: "rs8m://192.168.0.101:10001".into(),
@@ -55,12 +55,12 @@ async fn test_read_stream() {
             StreamSpec {
                 stream_uri: "/streams/777777-888888-999999".into(),
                 stream_uid: "777777-888888-999999".into(),
-                source: ConnectionSpec::Variant0 {
+                source: ConnectionSpec::EndpointConnection {
                     connection_type: ConnectionType::Endpoint,
                     endpoint_uri: "/peers/111111-222222-333333/endpoints/444444-555555-666666"
                         .into(),
                 },
-                destination: ConnectionSpec::Variant1 {
+                destination: ConnectionSpec::ExternalConnection {
                     connection_type: ConnectionType::External,
                     media_uri: "rtp+rs8m://192.168.0.101:10000".into(),
                     repair_uri: "rs8m://192.168.0.101:10001".into(),

@@ -62,6 +62,7 @@ thiserror = "2.0.12"
 tower = "0.5.2"
 tracing = "0.1.41"
 tracing-core = "0.1.33"
+url = "2.5.4"
 utoipa-axum = "0.2.0"
 
 [dependencies.axum]
@@ -79,6 +80,10 @@ optional = true
 
 [dependencies.serde]
 version = "1.0.219"
+features = ["derive"]
+
+[dependencies.strum]
+version = "0.27.1"
 features = ["derive"]
 
 [dependencies.time]

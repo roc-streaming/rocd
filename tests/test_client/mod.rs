@@ -45,6 +45,7 @@ pub mod types {
     ///{
     ///  "oneOf": [
     ///    {
+    ///      "title": "EndpointConnection",
     ///      "type": "object",
     ///      "required": [
     ///        "connection_type",
@@ -60,6 +61,7 @@ pub mod types {
     ///      }
     ///    },
     ///    {
+    ///      "title": "ExternalConnection",
     ///      "type": "object",
     ///      "required": [
     ///        "connection_type",
@@ -89,11 +91,11 @@ pub mod types {
     #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     #[serde(untagged)]
     pub enum ConnectionSpec {
-        Variant0 {
+        EndpointConnection {
             connection_type: ConnectionType,
             endpoint_uri: ::std::string::String,
         },
-        Variant1 {
+        ExternalConnection {
             connection_type: ConnectionType,
             control_uri: ::std::string::String,
             media_uri: ::std::string::String,

@@ -17,7 +17,9 @@ const SEG_COUNT: usize = 3;
 const SEG_LEN: usize = 6;
 const SEG_CHARS: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
 
-/// Globally unique identifier.
+/// Unique identifier.
+///
+/// Copyable and immutable.
 ///
 /// Stored as a fixed-size byte array. Convertible from/into string and
 /// (de)serealized to/from json as string.
@@ -34,11 +36,12 @@ const SEG_CHARS: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
 pub struct Uid([u8; UID_LEN]);
 
 impl Uid {
-    /// Parse uid from string.
+    /// Parse UID from string.
     pub fn parse(text: &str) -> Result<Self, ValidationError> {
-        let rx = static_regex!("^([a-z0-9]{6})-([a-z0-9]{6})-([a-z0-9]{6})$");
+        let rx = static_regex!(r"^([a-z0-9]{6})-([a-z0-9]{6})-([a-z0-9]{6})$");
 
-        let cap = rx.captures(text).ok_or_else(|| ValidationError::UidError(text.into()))?;
+        let cap =
+            rx.captures(text).ok_or_else(|| ValidationError::UidFormatError(text.into()))?;
 
         let mut uid = [0u8; UID_LEN];
         let mut pos = 0;
@@ -57,7 +60,7 @@ impl Uid {
         Ok(Uid(uid))
     }
 
-    /// Encode raw bytes into Uid.
+    /// Encode raw bytes into UID.
     /// Uses only first UID_LEN bytes of the slice.
     fn encode(bytes: &[u8]) -> Uid {
         assert!(bytes.len() >= UID_LEN);
@@ -93,10 +96,10 @@ impl Uid {
         Self::encode(&bytes)
     }
 
-    /// Generate UID from SHA-256 hash of scope and name.
-    /// Scope argument is for convenience. If a caller uses a unique scope,
+    /// Generate UID from SHA-256 hash of "scope" and "name".
+    /// Scope argument is for convenience. If the caller uses a unique scope,
     /// it can be sure that a different caller with different scope won't
-    /// produce same uid from same name.
+    /// produce same UID from same name.
     pub fn generate_reproducible(scope: &str, name: &str) -> Uid {
         let mut hasher = Sha256::new();
         hasher.update(scope);
@@ -140,20 +143,20 @@ impl From<Uid> for String {
 }
 
 /// Uid to &str
-impl<'a> From<&'a Uid> for &'a str {
-    fn from(uid: &'a Uid) -> &'a str {
+impl<'u> From<&'u Uid> for &'u str {
+    fn from(uid: &'u Uid) -> &'u str {
         uid.as_str()
     }
 }
 
 impl fmt::Display for Uid {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(self.as_str())
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
 impl fmt::Debug for Uid {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Uid({})", self.as_str())
     }
 }
@@ -186,32 +189,31 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
-    fn test_parse() {
-        {
-            let good =
-                vec!["111111-222222-333333", "aaaaaa-bbbbbb-bbbbbb", "rx4sse-w0zas1-gf2s1o"];
+    fn test_parse_ok() {
+        let cases =
+            vec!["111111-222222-333333", "aaaaaa-bbbbbb-bbbbbb", "rx4sse-w0zas1-gf2s1o"];
 
-            for text in good {
-                let uid = Uid::parse(text).expect(text);
+        for text in &cases {
+            let uid = Uid::parse(text).expect(text);
 
-                assert_eq!(text, uid.as_str());
-                assert_eq!(text, uid.to_string());
-            }
+            assert_eq!(*text, uid.as_str());
+            assert_eq!(*text, uid.to_string());
         }
+    }
 
-        {
-            let bad = vec![
-                "111111-222222-33333",
-                "Aaaaaa-bbbbbb-bbbbbb",
-                "111111-222222-33333-",
-                "111111-22222233333",
-                "--",
-                "",
-            ];
+    #[test]
+    fn test_parse_err() {
+        let cases = vec![
+            "111111-222222-33333",
+            "Aaaaaa-bbbbbb-bbbbbb",
+            "111111-222222-33333-",
+            "111111-22222233333",
+            "--",
+            "",
+        ];
 
-            for text in &bad {
-                assert_matches!(Uid::parse(text), Err(ValidationError::UidError(_)));
-            }
+        for text in &cases {
+            assert_matches!(Uid::parse(text), Err(ValidationError::UidFormatError(_)));
         }
     }
 
@@ -276,7 +278,7 @@ mod tests {
         let cases =
             vec!["111111-222222-333333", "aaaaaa-bbbbbb-bbbbbb", "rx4sse-w0zas1-gf2s1o"];
 
-        for text in cases {
+        for text in &cases {
             let uid = Uid::parse(text).expect(text);
 
             // Uid from String
@@ -297,7 +299,7 @@ mod tests {
             {
                 let u = uid;
                 let s = String::from(u);
-                assert_eq!(text, s);
+                assert_eq!(*text, s);
             }
 
             // str from Uid
@@ -305,21 +307,21 @@ mod tests {
                 type StrRef<'a> = &'a str;
                 let u = uid;
                 let s = StrRef::from(&u);
-                assert_eq!(text, s);
+                assert_eq!(*text, s);
             }
 
             // Uid into String
             {
                 let u = uid;
                 let s: String = u.into();
-                assert_eq!(text, s);
+                assert_eq!(*text, s);
             }
 
             // Uid into str
             {
                 let u = uid;
                 let s: &str = (&u).into();
-                assert_eq!(text, s);
+                assert_eq!(*text, s);
             }
         }
     }
@@ -329,11 +331,11 @@ mod tests {
         let cases =
             vec!["111111-222222-333333", "aaaaaa-bbbbbb-bbbbbb", "rx4sse-w0zas1-gf2s1o"];
 
-        for text in cases {
+        for text in &cases {
             let uid = Uid::parse(text).expect(text);
 
             // fmt::Display
-            assert_eq!(text, format!("{}", uid));
+            assert_eq!(*text, format!("{}", uid));
             // fmt::Debug
             assert_eq!(format!("Uid({})", text), format!("{:?}", uid));
         }

@@ -46,11 +46,12 @@ fn make_uid<S: ToString>(name: S) -> Uid {
 }
 
 fn make_endpoint_spec<S: ToString>(endpoint_uid: &Uid, endpoint_name: S) -> Arc<EndpointSpec> {
+    let peer_uid = make_uid("test_peer");
     let endpoint_name = endpoint_name.to_string();
 
     Arc::new(EndpointSpec {
-        endpoint_uri: format!("/test/{}", endpoint_uid),
-        peer_uid: make_uid("test_peer"),
+        endpoint_uri: Uri::from_endpoint(&peer_uid, &endpoint_uid),
+        peer_uid: peer_uid,
         endpoint_uid: *endpoint_uid,
         endpoint_type: EndpointType::SystemDevice,
         stream_direction: EndpointDir::Output,
@@ -61,18 +62,21 @@ fn make_endpoint_spec<S: ToString>(endpoint_uid: &Uid, endpoint_name: S) -> Arc<
 }
 
 fn make_stream_spec(stream_uid: &Uid) -> Arc<StreamSpec> {
+    let peer_uid = make_uid("test_peer");
+    let endpoint_uid = make_uid("test_endpoint");
+
     Arc::new(StreamSpec {
-        stream_uri: format!("/test/{}", stream_uid),
+        stream_uri: Uri::from_stream(stream_uid),
         stream_uid: *stream_uid,
         source: ConnectionSpec::Endpoint {
             connection_type: ConnectionType::Endpoint,
-            endpoint_uri: "test".into(),
+            endpoint_uri: Uri::from_endpoint(&peer_uid, &endpoint_uid),
         },
         destination: ConnectionSpec::External {
             connection_type: ConnectionType::External,
-            media_uri: "test".into(),
-            repair_uri: "test".into(),
-            control_uri: "test".into(),
+            media_uri: Uri::parse("rtp+rs8m://192.168.0.101:10000").unwrap(),
+            repair_uri: Uri::parse("rs8m://192.168.0.101:10001").unwrap(),
+            control_uri: Uri::parse("rtcp://192.168.0.101:10002").unwrap(),
         },
     })
 }
