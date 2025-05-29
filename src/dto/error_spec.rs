@@ -12,5 +12,5 @@ pub struct ErrorSpec {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ErrorCode {
-    ValidationFailed,
+    InvalidArgs,
 }

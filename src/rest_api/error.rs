@@ -4,7 +4,7 @@ use crate::dto::*;
 
 use axum::extract::Json;
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Response};
 use std::io;
 use tokio::task::JoinError;
 
@@ -33,11 +33,11 @@ pub enum HandlerError {
 }
 
 impl IntoResponse for HandlerError {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         let error_text = self.to_string();
 
         let (status_code, error_code) = match &self {
-            Self::ValidationError(_) => (StatusCode::BAD_REQUEST, ErrorCode::ValidationFailed),
+            Self::ValidationError(_) => (StatusCode::BAD_REQUEST, ErrorCode::InvalidArgs),
         };
 
         let response_body = ErrorSpec { error_code, error_text };

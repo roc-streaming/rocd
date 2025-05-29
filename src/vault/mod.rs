@@ -199,7 +199,7 @@ impl Backend {
     }
 
     /// Get metrics.
-    pub async fn metrics(&self) -> VaultMetrics {
+    async fn metrics(&self) -> VaultMetrics {
         let db_metrics = self.db.metrics();
 
         let mut cache_size = 0;
@@ -235,7 +235,7 @@ impl Backend {
         }
 
         // Slow path: read keyset from db.
-        let kset: Arc<HashSet<Uid>> = self.db.list_entry(table).await?;
+        let kset: Arc<HashSet<Uid>> = self.db.list_entries(table).await?;
 
         {
             let mut wlocked_cache = cache.write().await;

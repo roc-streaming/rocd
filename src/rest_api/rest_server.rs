@@ -24,6 +24,7 @@ type Result<T> = result::Result<T, ServerError>;
 type ServerHandle = axum_server::Handle;
 type TaskHandle = tokio::task::JoinHandle<io::Result<()>>;
 
+/// Runs HTTP server with REST API and OpenAPI docs.
 pub struct RestServer {
     state: Mutex<ServerState>,
 }

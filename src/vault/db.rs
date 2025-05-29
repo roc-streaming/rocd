@@ -90,7 +90,7 @@ impl Db {
     }
 
     /// Obtain list of table keys (UIDs).
-    pub async fn list_entry(
+    pub async fn list_entries(
         self: &Arc<Self>, table_definition: Table,
     ) -> Result<Arc<HashSet<Uid>>> {
         // run blocking read on background thread
