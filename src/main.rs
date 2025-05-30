@@ -1,7 +1,7 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-use rocd::io_endpoint::EndpointDispatcher;
-use rocd::io_stream::StreamDispatcher;
+use rocd::io_endpoints::EndpointDispatcher;
+use rocd::io_streams::StreamDispatcher;
 use rocd::rest_api::RestServer;
 
 use clap::{ArgAction, Parser};

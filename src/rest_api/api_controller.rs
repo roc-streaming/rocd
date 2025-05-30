@@ -1,8 +1,8 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
 use crate::dto::*;
-use crate::io_endpoint::EndpointDispatcher;
-use crate::io_stream::StreamDispatcher;
+use crate::io_endpoints::EndpointDispatcher;
+use crate::io_streams::StreamDispatcher;
 use crate::rest_api::error::*;
 
 use axum::Router;
