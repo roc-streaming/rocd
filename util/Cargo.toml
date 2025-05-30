@@ -12,14 +12,15 @@ test = false
 prettyplease = "0.2.32"
 progenitor = "0.10.0"
 syn = "2.0.101"
-clap = "4.5.0"
+
+[dependencies.clap]
+workspace = true
 
 [dependencies.serde]
-version = "1.0.219"
-features = ["derive"]
+workspace = true
 
 [dependencies.serde_json]
-version = "1.0.140"
+workspace = true
 
 [dependencies.rocd]
 path = ".."
