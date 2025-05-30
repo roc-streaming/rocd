@@ -7,6 +7,7 @@ use rocd::io_streams::StreamDispatcher;
 use rocd::p2p::PeerDispatcher;
 use rocd::rest_api::RestServer;
 
+use clap::builder::styling::{AnsiColor, Styles};
 use clap::{ArgAction, Parser};
 use std::net::SocketAddr;
 use std::process;
@@ -15,10 +16,16 @@ use std::sync::Arc;
 use time::macros::format_description;
 use tracing_subscriber::fmt::time::LocalTime;
 
+const CLI_STYLES: Styles = Styles::styled()
+    .header(AnsiColor::BrightWhite.on_default().bold())
+    .usage(AnsiColor::BrightWhite.on_default().bold())
+    .literal(AnsiColor::BrightBlue.on_default().bold())
+    .placeholder(AnsiColor::Yellow.on_default());
+
 #[derive(Parser, Debug)]
-#[command(about = "rocd server")]
+#[command(about = "rocd server", styles = CLI_STYLES)]
 struct CliArgs {
-    /// HOST:PORT to bind HTTP server to.
+    /// Address for HTTP server.
     #[arg(short, long, value_name = "HOST:PORT", default_value = "127.0.0.1:4040")]
     addr: String,
 
