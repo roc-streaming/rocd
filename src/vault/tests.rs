@@ -45,6 +45,10 @@ fn make_uid<S: ToString>(name: S) -> Uid {
     Uid::generate_reproducible(UidTag::Unspecified, &name.to_string())
 }
 
+fn make_peer_spec(peer_uid: &Uid) -> Arc<PeerSpec> {
+    Arc::new(PeerSpec { peer_uri: Uri::from_peer(peer_uid), peer_uid: *peer_uid })
+}
+
 fn make_endpoint_spec<S: ToString>(endpoint_uid: &Uid, endpoint_name: S) -> Arc<EndpointSpec> {
     let peer_uid = make_uid("test_peer");
     let endpoint_name = endpoint_name.to_string();
@@ -563,29 +567,37 @@ async fn test_big_cache() {
 async fn test_dto_types() {
     let (_temp_dir, vault) = make_temp_vault().await;
 
-    let endpoint_uid = make_uid("uid_1");
+    let peer_uid = make_uid("peer_uid");
+    let peer_spec = make_peer_spec(&peer_uid);
+
+    let endpoint_uid = make_uid("endpoint_uid");
     let endpoint_spec = make_endpoint_spec(&endpoint_uid, "endpoint_name");
 
-    let stream_uid = make_uid("uid_2");
+    let stream_uid = make_uid("stream_uid");
     let stream_spec = make_stream_spec(&stream_uid);
 
     // write
+    assert_ok!(vault.write_peer(&peer_spec).await);
     assert_ok!(vault.write_endpoint(&endpoint_spec).await);
     assert_ok!(vault.write_stream(&stream_spec).await);
 
     // read
+    assert_eq!(*vault.read_peer(&peer_uid).await.unwrap(), *peer_spec);
     assert_eq!(*vault.read_endpoint(&endpoint_uid).await.unwrap(), *endpoint_spec);
     assert_eq!(*vault.read_stream(&stream_uid).await.unwrap(), *stream_spec);
 
     // list
+    assert_eq!(*vault.list_peers().await.unwrap(), HashSet::from([peer_uid]));
     assert_eq!(*vault.list_endpoints().await.unwrap(), HashSet::from([endpoint_uid]));
     assert_eq!(*vault.list_streams().await.unwrap(), HashSet::from([stream_uid]));
 
     // remove
+    assert_ok!(vault.remove_peer(&peer_uid).await);
     assert_ok!(vault.remove_endpoint(&endpoint_uid).await);
     assert_ok!(vault.remove_stream(&stream_uid).await);
 
     // list
+    assert_eq!(*vault.list_peers().await.unwrap(), HashSet::new());
     assert_eq!(*vault.list_endpoints().await.unwrap(), HashSet::new());
     assert_eq!(*vault.list_streams().await.unwrap(), HashSet::new());
 }

@@ -81,6 +81,28 @@ impl Vault {
         self.backend.metrics().await
     }
 
+    /// List all peer UIDs.
+    pub async fn list_peers(&self) -> Result<Arc<HashSet<Uid>>> {
+        self.backend.list_entities(Backend::PEER_TABLE, &self.backend.peer_cache).await
+    }
+
+    /// Read peer by UID.
+    pub async fn read_peer(&self, uid: &Uid) -> Result<Arc<PeerSpec>> {
+        self.backend.read_entity(Backend::PEER_TABLE, &self.backend.peer_cache, uid).await
+    }
+
+    /// Write peer.
+    pub async fn write_peer(&self, peer: &Arc<PeerSpec>) -> Result<()> {
+        self.backend
+            .write_entity(Backend::PEER_TABLE, &self.backend.peer_cache, &peer.peer_uid, peer)
+            .await
+    }
+
+    /// Remove peer.
+    pub async fn remove_peer(&self, uid: &Uid) -> Result<()> {
+        self.backend.remove_entity(Backend::PEER_TABLE, &self.backend.peer_cache, uid).await
+    }
+
     /// List all endpoint UIDs.
     pub async fn list_endpoints(&self) -> Result<Arc<HashSet<Uid>>> {
         self.backend.list_entities(Backend::ENDPOINT_TABLE, &self.backend.endpoint_cache).await
@@ -170,6 +192,7 @@ struct Backend {
     db: Arc<Db>,
 
     // memory cache
+    peer_cache: RwLock<Cache<PeerSpec>>,
     endpoint_cache: RwLock<Cache<EndpointSpec>>,
     stream_cache: RwLock<Cache<StreamSpec>>,
 
@@ -181,6 +204,7 @@ struct Backend {
 }
 
 impl Backend {
+    const PEER_TABLE: Table = Table::new("peers");
     const ENDPOINT_TABLE: Table = Table::new("endpoints");
     const STREAM_TABLE: Table = Table::new("streams");
 
@@ -189,6 +213,7 @@ impl Backend {
         Backend {
             db,
             write_lock: Mutex::new(()),
+            peer_cache: RwLock::new(Cache::new(config)),
             endpoint_cache: RwLock::new(Cache::new(config)),
             stream_cache: RwLock::new(Cache::new(config)),
             cache_hits: AtomicUsize::new(0),
