@@ -2,6 +2,7 @@
 // Licensed under MPL-2.0
 use crate::io_endpoints::EndpointDispatcher;
 use crate::io_streams::StreamDispatcher;
+use crate::p2p::PeerDispatcher;
 use crate::rest_api::api_controller::ApiController;
 use crate::rest_api::doc_controller::DocController;
 use crate::rest_api::error::ServerError;
@@ -38,14 +39,18 @@ struct ServerState {
 impl RestServer {
     /// Create unstarted server.
     pub fn new(
-        endpoint_dispatcher: Arc<EndpointDispatcher>, stream_dispatcher: Arc<StreamDispatcher>,
+        peer_dispatcher: Arc<PeerDispatcher>, endpoint_dispatcher: Arc<EndpointDispatcher>,
+        stream_dispatcher: Arc<StreamDispatcher>,
     ) -> Self {
         let mut router = Router::new();
         let spec;
 
         {
-            let api_controller =
-                Arc::new(ApiController::new(endpoint_dispatcher, stream_dispatcher));
+            let api_controller = Arc::new(ApiController::new(
+                peer_dispatcher,
+                endpoint_dispatcher,
+                stream_dispatcher,
+            ));
 
             let (api_router, api_spec) = api_controller.router_with_spec();
 

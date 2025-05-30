@@ -488,6 +488,38 @@ pub mod types {
             value.parse()
         }
     }
+    ///`PeerSpec`
+    ///
+    /// <details><summary>JSON schema</summary>
+    ///
+    /// ```json
+    ///{
+    ///  "type": "object",
+    ///  "required": [
+    ///    "peer_uid",
+    ///    "peer_uri"
+    ///  ],
+    ///  "properties": {
+    ///    "peer_uid": {
+    ///      "type": "string"
+    ///    },
+    ///    "peer_uri": {
+    ///      "type": "string"
+    ///    }
+    ///  }
+    ///}
+    /// ```
+    /// </details>
+    #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
+    pub struct PeerSpec {
+        pub peer_uid: ::std::string::String,
+        pub peer_uri: ::std::string::String,
+    }
+    impl ::std::convert::From<&PeerSpec> for PeerSpec {
+        fn from(value: &PeerSpec) -> Self {
+            value.clone()
+        }
+    }
     ///`StreamSpec`
     ///
     /// <details><summary>JSON schema</summary>
@@ -588,6 +620,102 @@ impl Client {
 #[allow(clippy::all)]
 #[allow(elided_named_lifetimes)]
 impl Client {
+    /**Sends a `GET` request to `/peers`
+
+*/
+    pub async fn list_peers<'a>(
+        &'a self,
+    ) -> Result<ResponseValue<::std::vec::Vec<types::PeerSpec>>, Error<()>> {
+        let url = format!("{}/peers", self.baseurl,);
+        let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(self.api_version()),
+            );
+        #[allow(unused_mut)]
+        let mut request = self
+            .client
+            .get(url)
+            .header(
+                ::reqwest::header::ACCEPT,
+                ::reqwest::header::HeaderValue::from_static("application/json"),
+            )
+            .headers(header_map)
+            .build()?;
+        let result = self.client.execute(request).await;
+        let response = result?;
+        match response.status().as_u16() {
+            200u16 => ResponseValue::from_response(response).await,
+            _ => Err(Error::UnexpectedResponse(response)),
+        }
+    }
+    /**Sends a `GET` request to `/peers/{peer_uid}`
+
+*/
+    pub async fn read_peer<'a>(
+        &'a self,
+        peer_uid: &'a str,
+    ) -> Result<ResponseValue<types::PeerSpec>, Error<()>> {
+        let url = format!(
+            "{}/peers/{}", self.baseurl, encode_path(& peer_uid.to_string()),
+        );
+        let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(self.api_version()),
+            );
+        #[allow(unused_mut)]
+        let mut request = self
+            .client
+            .get(url)
+            .header(
+                ::reqwest::header::ACCEPT,
+                ::reqwest::header::HeaderValue::from_static("application/json"),
+            )
+            .headers(header_map)
+            .build()?;
+        let result = self.client.execute(request).await;
+        let response = result?;
+        match response.status().as_u16() {
+            200u16 => ResponseValue::from_response(response).await,
+            _ => Err(Error::UnexpectedResponse(response)),
+        }
+    }
+    /**Sends a `PUT` request to `/peers/{peer_uid}`
+
+*/
+    pub async fn update_peer<'a>(
+        &'a self,
+        peer_uid: &'a str,
+    ) -> Result<ResponseValue<types::PeerSpec>, Error<()>> {
+        let url = format!(
+            "{}/peers/{}", self.baseurl, encode_path(& peer_uid.to_string()),
+        );
+        let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(self.api_version()),
+            );
+        #[allow(unused_mut)]
+        let mut request = self
+            .client
+            .put(url)
+            .header(
+                ::reqwest::header::ACCEPT,
+                ::reqwest::header::HeaderValue::from_static("application/json"),
+            )
+            .headers(header_map)
+            .build()?;
+        let result = self.client.execute(request).await;
+        let response = result?;
+        match response.status().as_u16() {
+            200u16 => ResponseValue::from_response(response).await,
+            _ => Err(Error::UnexpectedResponse(response)),
+        }
+    }
     /**Sends a `GET` request to `/peers/{peer_uid}/endpoints`
 
 */

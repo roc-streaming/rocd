@@ -3,6 +3,7 @@
 use crate::dto::*;
 use crate::io_endpoints::EndpointDispatcher;
 use crate::io_streams::StreamDispatcher;
+use crate::p2p::PeerDispatcher;
 use crate::rest_api::error::*;
 
 use axum::Router;
@@ -15,15 +16,17 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
 pub struct ApiController {
+    peer_dispatcher: Arc<PeerDispatcher>,
     endpoint_dispatcher: Arc<EndpointDispatcher>,
     stream_dispatcher: Arc<StreamDispatcher>,
 }
 
 impl ApiController {
     pub fn new(
-        endpoint_dispatcher: Arc<EndpointDispatcher>, stream_dispatcher: Arc<StreamDispatcher>,
+        peer_dispatcher: Arc<PeerDispatcher>, endpoint_dispatcher: Arc<EndpointDispatcher>,
+        stream_dispatcher: Arc<StreamDispatcher>,
     ) -> Self {
-        ApiController { endpoint_dispatcher, stream_dispatcher }
+        ApiController { peer_dispatcher, endpoint_dispatcher, stream_dispatcher }
     }
 
     pub fn spec() -> OpenApi {
@@ -38,6 +41,10 @@ impl ApiController {
 
     fn build() -> OpenApiRouter {
         OpenApiRouter::with_openapi(ApiDoc::openapi())
+            // peers
+            .routes(routes!(list_peers))
+            .routes(routes!(read_peer))
+            .routes(routes!(update_peer))
             // endpoints
             .routes(routes!(list_endpoints))
             .routes(routes!(read_endpoint))
@@ -54,6 +61,51 @@ impl ApiController {
 struct ApiDoc;
 
 type Result<T> = result::Result<T, HandlerError>;
+
+// peers
+
+#[utoipa::path(
+    get,
+    path = "/peers",
+    responses(
+        (status = 200, description = "Success", body = [PeerSpec]),
+    )
+)]
+async fn list_peers(
+    Extension(controller): Extension<Arc<ApiController>>,
+) -> Result<Json<Vec<PeerSpec>>> {
+    Ok(Json(controller.peer_dispatcher.get_all().await))
+}
+
+#[utoipa::path(
+    get,
+    path = "/peers/{peer_uid}",
+    responses(
+        (status = 200, description = "Success", body = PeerSpec),
+    )
+)]
+async fn read_peer(
+    Extension(controller): Extension<Arc<ApiController>>, Path(peer_uid): Path<String>,
+) -> Result<Json<PeerSpec>> {
+    let peer_uid = Uid::parse(&peer_uid)?;
+
+    Ok(Json(controller.peer_dispatcher.get_peer(&peer_uid).await))
+}
+
+#[utoipa::path(
+    put,
+    path = "/peers/{peer_uid}",
+    responses(
+        (status = 200, description = "Success", body = PeerSpec),
+    )
+)]
+async fn update_peer(
+    Extension(controller): Extension<Arc<ApiController>>, Path(peer_uid): Path<String>,
+) -> Result<Json<PeerSpec>> {
+    let peer_uid = Uid::parse(&peer_uid)?;
+
+    Ok(Json(controller.peer_dispatcher.get_peer(&peer_uid).await))
+}
 
 // endpoints
 

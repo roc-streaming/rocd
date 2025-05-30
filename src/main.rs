@@ -2,6 +2,7 @@
 // Licensed under MPL-2.0
 use rocd::io_endpoints::EndpointDispatcher;
 use rocd::io_streams::StreamDispatcher;
+use rocd::p2p::PeerDispatcher;
 use rocd::rest_api::RestServer;
 
 use clap::{ArgAction, Parser};
@@ -39,10 +40,12 @@ async fn main() {
         },
     };
 
+    let peer_dispatcher = Arc::new(PeerDispatcher::new());
     let endpoint_dispatcher = Arc::new(EndpointDispatcher::new());
     let stream_dispatcher = Arc::new(StreamDispatcher::new());
 
-    let server = Arc::new(RestServer::new(endpoint_dispatcher, stream_dispatcher));
+    let server =
+        Arc::new(RestServer::new(peer_dispatcher, endpoint_dispatcher, stream_dispatcher));
 
     if let Err(err) = server.start(addr).await {
         tracing::error!("http server failed to start: {err}");

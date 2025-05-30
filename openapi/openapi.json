@@ -10,6 +10,78 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/peers": {
+      "get": {
+        "operationId": "list_peers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PeerSpec"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/peers/{peer_uid}": {
+      "get": {
+        "operationId": "read_peer",
+        "parameters": [
+          {
+            "name": "peer_uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeerSpec"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_peer",
+        "parameters": [
+          {
+            "name": "peer_uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeerSpec"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/peers/{peer_uid}/endpoints": {
       "get": {
         "operationId": "list_endpoints",
@@ -289,6 +361,21 @@
           "system_device",
           "streaming_device"
         ]
+      },
+      "PeerSpec": {
+        "type": "object",
+        "required": [
+          "peer_uri",
+          "peer_uid"
+        ],
+        "properties": {
+          "peer_uri": {
+            "type": "string"
+          },
+          "peer_uid": {
+            "type": "string"
+          }
+        }
       },
       "StreamSpec": {
         "type": "object",
