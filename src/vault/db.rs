@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::result;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::task;
 
@@ -39,16 +39,16 @@ pub struct Db {
     buffer: Mutex<Vec<u8>>,
 
     // Metrics.
-    read_ops: AtomicU64,
-    write_ops: AtomicU64,
+    read_ops: AtomicUsize,
+    write_ops: AtomicUsize,
 }
 
 #[derive(PartialEq, Debug)]
 pub struct DbMetrics {
     /// Accumulative counter of read transactions.
-    pub read_ops: u64,
+    pub read_ops: usize,
     /// Accumulative counter of write transactions.
-    pub write_ops: u64,
+    pub write_ops: usize,
 }
 
 /// Thread-safe key-value vault.
@@ -76,8 +76,8 @@ impl Db {
         Ok(Arc::new(Db {
             handle: task_result?,
             buffer: Mutex::new(Vec::with_capacity(4096)),
-            read_ops: AtomicU64::new(0),
-            write_ops: AtomicU64::new(0),
+            read_ops: AtomicUsize::new(0),
+            write_ops: AtomicUsize::new(0),
         }))
     }
 

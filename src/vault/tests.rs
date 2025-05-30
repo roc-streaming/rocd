@@ -488,7 +488,7 @@ async fn test_small_cache() {
     assert_eq!(metrics.cache_size, CACHE_SIZE);
     assert!(CACHE_SIZE < TOTAL_SIZE);
     assert_eq!(metrics.db_reads, 0);
-    assert_eq!(metrics.db_writes, TOTAL_SIZE as u64);
+    assert_eq!(metrics.db_writes, TOTAL_SIZE);
 
     // Read TOTAL_SIZE endpoints.
     for n in 0..TOTAL_SIZE {
@@ -504,9 +504,9 @@ async fn test_small_cache() {
     assert!(CACHE_SIZE < TOTAL_SIZE);
     // A bit relaxed requirement for # of read operations, because we
     // don't want to rely on exact detail of quick-cache.
-    assert_ge!(metrics.db_reads, (TOTAL_SIZE - CACHE_SIZE - 1) as u64);
-    assert_le!(metrics.db_reads, (TOTAL_SIZE - CACHE_SIZE + 1) as u64);
-    assert_eq!(metrics.db_writes, TOTAL_SIZE as u64);
+    assert_ge!(metrics.db_reads, TOTAL_SIZE - CACHE_SIZE - 1);
+    assert_le!(metrics.db_reads, TOTAL_SIZE - CACHE_SIZE + 1);
+    assert_eq!(metrics.db_writes, TOTAL_SIZE);
 }
 
 // How LRU cache works when cache is larger than DB size.
@@ -540,7 +540,7 @@ async fn test_big_cache() {
     assert_eq!(metrics.cache_size, TOTAL_SIZE);
     assert!(TOTAL_SIZE < CACHE_SIZE);
     assert_eq!(metrics.db_reads, 0);
-    assert_eq!(metrics.db_writes, TOTAL_SIZE as u64);
+    assert_eq!(metrics.db_writes, TOTAL_SIZE);
 
     // Read TOTAL_SIZE endpoints.
     for n in 0..TOTAL_SIZE {
@@ -555,7 +555,7 @@ async fn test_big_cache() {
     assert_eq!(metrics.cache_size, TOTAL_SIZE);
     assert!(TOTAL_SIZE < CACHE_SIZE);
     assert_eq!(metrics.db_reads, 0); // every read was from cache
-    assert_eq!(metrics.db_writes, TOTAL_SIZE as u64);
+    assert_eq!(metrics.db_writes, TOTAL_SIZE);
 }
 
 // Ensure all DTOs are supported.

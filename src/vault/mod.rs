@@ -16,7 +16,7 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use std::result;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::sync::{Mutex, RwLock};
 
 pub type Result<T> = result::Result<T, VaultError>;
@@ -41,18 +41,18 @@ pub struct VaultMetrics {
     pub cache_size: usize,
 
     /// Cummulative counters of cache hits.
-    pub cache_hits: u64,
+    pub cache_hits: usize,
     /// Cummulative counters of cache misses.
-    pub cache_misses: u64,
+    pub cache_misses: usize,
     /// Cummulative counters of drops caused by conflicts.
-    pub cache_drops: u64,
+    pub cache_drops: usize,
     /// Cummulative counters of copy-on-writes.
-    pub cache_cows: u64,
+    pub cache_cows: usize,
 
     /// Cummulative DB read transactions.
-    pub db_reads: u64,
+    pub db_reads: usize,
     /// Cummulative DB write transactions.
-    pub db_writes: u64,
+    pub db_writes: usize,
 }
 
 /// Persistent storage for run-time state.
@@ -174,10 +174,10 @@ struct Backend {
     stream_cache: RwLock<Cache<StreamSpec>>,
 
     // metrics
-    cache_hits: AtomicU64,
-    cache_misses: AtomicU64,
-    cache_drops: AtomicU64,
-    cache_cows: AtomicU64,
+    cache_hits: AtomicUsize,
+    cache_misses: AtomicUsize,
+    cache_drops: AtomicUsize,
+    cache_cows: AtomicUsize,
 }
 
 impl Backend {
@@ -191,10 +191,10 @@ impl Backend {
             write_lock: Mutex::new(()),
             endpoint_cache: RwLock::new(Cache::new(config)),
             stream_cache: RwLock::new(Cache::new(config)),
-            cache_hits: AtomicU64::new(0),
-            cache_misses: AtomicU64::new(0),
-            cache_drops: AtomicU64::new(0),
-            cache_cows: AtomicU64::new(0),
+            cache_hits: AtomicUsize::new(0),
+            cache_misses: AtomicUsize::new(0),
+            cache_drops: AtomicUsize::new(0),
+            cache_cows: AtomicUsize::new(0),
         }
     }
 
