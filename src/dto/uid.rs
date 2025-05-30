@@ -9,6 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
 use std::fmt;
+use std::slice;
 
 const UID_LEN: usize = 20;
 
@@ -34,6 +35,15 @@ const SEG_CHARS: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
 /// meteor are roughly the same.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Uid([u8; UID_LEN]);
+
+#[derive(Copy, Clone, PartialEq, Debug, strum::Display)]
+#[strum(serialize_all = "snake_case")]
+pub enum UidTag {
+    Unspecified = 0,
+    Peer = 1,
+    Stream = 2,
+    PipewireEndpoint = 3,
+}
 
 impl Uid {
     /// Parse UID from string.
@@ -96,14 +106,13 @@ impl Uid {
         Self::encode(&bytes)
     }
 
-    /// Generate UID from SHA-256 hash of "scope" and "name".
-    /// Scope argument is for convenience. If the caller uses a unique scope,
-    /// it can be sure that a different caller with different scope won't
-    /// produce same UID from same name.
-    pub fn generate_reproducible(scope: &str, name: &str) -> Uid {
+    /// Generate UID from SHA-256 hash of tag and seed.
+    /// Tag argument is for convenience, it ensures that UIDs for different
+    /// tags are different even if their seeds are equal.
+    pub fn generate_reproducible(tag: UidTag, seed: &str) -> Uid {
         let mut hasher = Sha256::new();
-        hasher.update(scope);
-        hasher.update(name);
+        hasher.update(slice::from_ref(&(tag as u8)));
+        hasher.update(seed);
 
         let bytes = hasher.finalize();
         Self::encode(&bytes)
@@ -238,7 +247,7 @@ mod tests {
         let mut all_uids = HashSet::new();
 
         for i in 0..100 {
-            let uid = Uid::generate_reproducible("test_scope", &i.to_string());
+            let uid = Uid::generate_reproducible(UidTag::Unspecified, &i.to_string());
 
             assert!(!all_uids.contains(&uid.to_string()));
             all_uids.insert(uid.to_string());
@@ -250,14 +259,14 @@ mod tests {
     }
 
     #[test]
-    fn test_scopes() {
+    fn test_kinds() {
         for i in 0..100 {
             for j in 0..100 {
-                let a_i = Uid::generate_reproducible("scope_a", &i.to_string());
-                let a_j = Uid::generate_reproducible("scope_a", &j.to_string());
+                let a_i = Uid::generate_reproducible(UidTag::Peer, &i.to_string());
+                let a_j = Uid::generate_reproducible(UidTag::Peer, &j.to_string());
 
-                let b_i = Uid::generate_reproducible("scope_b", &i.to_string());
-                let b_j = Uid::generate_reproducible("scope_b", &j.to_string());
+                let b_i = Uid::generate_reproducible(UidTag::Stream, &i.to_string());
+                let b_j = Uid::generate_reproducible(UidTag::Stream, &j.to_string());
 
                 assert!(a_i != b_i);
                 assert!(a_j != b_j);

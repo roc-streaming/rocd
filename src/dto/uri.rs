@@ -31,10 +31,10 @@ use url::Url;
 /// creating Uri from parts or modifying parts bypassing constructor.
 /// We want to guarantee that only valid URI can be constructed.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Uri(UriData);
+pub struct Uri(UriParts);
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum UriData {
+pub enum UriParts {
     Peer { peer_uid: Uid },
     Endpoint { peer_uid: Uid, endpoint_uid: Uid },
     Stream { stream_uid: Uid },
@@ -74,22 +74,22 @@ impl Uri {
 
             if let Some(endpoint_uid) = cap.name("endpoint_uid") {
                 let endpoint_uid = Uid::parse(endpoint_uid.as_str())?;
-                return Ok(Uri(UriData::Endpoint { peer_uid, endpoint_uid }));
+                return Ok(Uri(UriParts::Endpoint { peer_uid, endpoint_uid }));
             }
 
-            return Ok(Uri(UriData::Peer { peer_uid }));
+            return Ok(Uri(UriParts::Peer { peer_uid }));
         }
 
         if let Some(stream_uid) = cap.name("stream_uid") {
             let stream_uid = Uid::parse(stream_uid.as_str())?;
-            return Ok(Uri(UriData::Stream { stream_uid }));
+            return Ok(Uri(UriParts::Stream { stream_uid }));
         }
 
         if let Some(external) = cap.name("external") {
             // ensure this is a valid url
             _ = Url::parse(external.as_str())
                 .map_err(|err| ValidationError::UrlFormatError(text.into(), err))?;
-            return Ok(Uri(UriData::External { url: external.as_str().into() }));
+            return Ok(Uri(UriParts::External { url: external.as_str().into() }));
         }
 
         Err(ValidationError::UriFormatError(text.into()))
@@ -97,44 +97,52 @@ impl Uri {
 
     /// Create peer URI.
     pub fn from_peer(peer_uid: &Uid) -> Uri {
-        Uri(UriData::Peer { peer_uid: *peer_uid })
+        Uri(UriParts::Peer { peer_uid: *peer_uid })
     }
 
     /// Create endpoint URI.
     pub fn from_endpoint(peer_uid: &Uid, endpoint_uid: &Uid) -> Uri {
-        Uri(UriData::Endpoint { peer_uid: *peer_uid, endpoint_uid: *endpoint_uid })
+        Uri(UriParts::Endpoint { peer_uid: *peer_uid, endpoint_uid: *endpoint_uid })
     }
 
     /// Create stream URI.
     pub fn from_stream(stream_uid: &Uid) -> Uri {
-        Uri(UriData::Stream { stream_uid: *stream_uid })
-    }
-
-    /// Access URI parsed data.
-    pub fn data(&self) -> &UriData {
-        &self.0
+        Uri(UriParts::Stream { stream_uid: *stream_uid })
     }
 
     /// Determine URI type.
     pub fn kind(&self) -> UriKind {
         match self.0 {
-            UriData::Peer { .. } => UriKind::Peer,
-            UriData::Endpoint { .. } => UriKind::Endpoint,
-            UriData::Stream { .. } => UriKind::Stream,
-            UriData::External { .. } => UriKind::External,
+            UriParts::Peer { .. } => UriKind::Peer,
+            UriParts::Endpoint { .. } => UriKind::Endpoint,
+            UriParts::Stream { .. } => UriKind::Stream,
+            UriParts::External { .. } => UriKind::External,
         }
     }
 
-    /// Return error on kind mismatch.
-    pub fn validate_kind(&self, key: &'static str, kind: UriKind) -> ValidationResult {
-        if self.kind() != kind {
-            return Err(ValidationError::UriTypeError {
-                key,
-                expected: kind,
-                actual: self.kind(),
-            });
+    /// Get peer UID, if URI has it.
+    pub fn peer_uid(&self) -> Option<Uid> {
+        match self.0 {
+            UriParts::Peer { peer_uid, .. } => Some(peer_uid),
+            UriParts::Endpoint { peer_uid, .. } => Some(peer_uid),
+            _ => None,
         }
-        Ok(())
+    }
+
+    /// Get endpoint UID, if URI has it.
+    pub fn endpoint_uid(&self) -> Option<Uid> {
+        match self.0 {
+            UriParts::Endpoint { endpoint_uid, .. } => Some(endpoint_uid),
+            _ => None,
+        }
+    }
+
+    /// Get stream UID, if URI has it.
+    pub fn stream_uid(&self) -> Option<Uid> {
+        match self.0 {
+            UriParts::Stream { stream_uid, .. } => Some(stream_uid),
+            _ => None,
+        }
     }
 }
 
@@ -166,16 +174,16 @@ impl From<Uri> for String {
 impl fmt::Display for Uri {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self.0 {
-            UriData::Peer { peer_uid } => {
+            UriParts::Peer { peer_uid } => {
                 write!(f, "/peers/{peer_uid}")?;
             },
-            UriData::Endpoint { peer_uid, endpoint_uid } => {
+            UriParts::Endpoint { peer_uid, endpoint_uid } => {
                 write!(f, "/peers/{peer_uid}/endpoints/{endpoint_uid}")?;
             },
-            UriData::Stream { stream_uid } => {
+            UriParts::Stream { stream_uid } => {
                 write!(f, "/streams/{stream_uid}")?;
             },
-            UriData::External { url } => {
+            UriParts::External { url } => {
                 write!(f, "{url}")?;
             },
         }

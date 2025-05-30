@@ -24,7 +24,6 @@ impl EndpointDispatcher {
     pub async fn get_endpoint(&self, peer_uid: &Uid, endpoint_uid: &Uid) -> EndpointSpec {
         EndpointSpec {
             endpoint_uri: Uri::from_endpoint(peer_uid, endpoint_uid),
-            peer_uid: *peer_uid,
             endpoint_uid: *endpoint_uid,
             endpoint_type: EndpointType::SystemDevice,
             stream_direction: EndpointDir::Output,

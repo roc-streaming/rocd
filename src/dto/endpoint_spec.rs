@@ -13,8 +13,6 @@ pub struct EndpointSpec {
     pub endpoint_uri: Uri,
 
     #[schema(value_type = String)]
-    pub peer_uid: Uid,
-    #[schema(value_type = String)]
     pub endpoint_uid: Uid,
 
     pub endpoint_type: EndpointType,
@@ -27,7 +25,16 @@ pub struct EndpointSpec {
 
 impl Validate for EndpointSpec {
     fn validate(&self) -> ValidationResult {
-        self.endpoint_uri.validate_kind("endpoint_uri", UriKind::Endpoint)?;
+        if self.endpoint_uri.kind() != UriKind::Endpoint {
+            return Err(ValidationError::LayoutError("unexpected endpoint_uri format".into()));
+        }
+
+        if self.endpoint_uri.endpoint_uid().unwrap() != self.endpoint_uid {
+            return Err(ValidationError::LayoutError(
+                "UID mismatch in endpoint_uri and endpoint_uid fields".into(),
+            ));
+        }
+
         Ok(())
     }
 }
@@ -68,8 +75,7 @@ mod tests {
 
         let good_spec = EndpointSpec {
             endpoint_uri: Uri::from_endpoint(&peer_uid, &endpoint_uid),
-            peer_uid: peer_uid,
-            endpoint_uid: endpoint_uid,
+            endpoint_uid,
             endpoint_type: EndpointType::SystemDevice,
             stream_direction: EndpointDir::Duplex,
             driver: EndpointDriver::Pipewire,
@@ -86,10 +92,16 @@ mod tests {
                 spec.endpoint_uri = Uri::from_peer(&peer_uid);
                 spec
             },
+            // UID mismatch in endpoint_uri and endpoint_uid
+            {
+                let mut spec = good_spec.clone();
+                spec.endpoint_uid = Uid::generate_random();
+                spec
+            },
         ];
 
         for spec in &bad_specs {
-            assert_err!(spec.validate());
+            assert_matches!(spec.validate(), Err(ValidationError::LayoutError(_)));
         }
     }
 }

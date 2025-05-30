@@ -42,7 +42,7 @@ async fn make_temp_vault() -> (TempDir, Vault) {
 }
 
 fn make_uid<S: ToString>(name: S) -> Uid {
-    Uid::generate_reproducible(module_path!(), &name.to_string())
+    Uid::generate_reproducible(UidTag::Unspecified, &name.to_string())
 }
 
 fn make_endpoint_spec<S: ToString>(endpoint_uid: &Uid, endpoint_name: S) -> Arc<EndpointSpec> {
@@ -51,7 +51,6 @@ fn make_endpoint_spec<S: ToString>(endpoint_uid: &Uid, endpoint_name: S) -> Arc<
 
     Arc::new(EndpointSpec {
         endpoint_uri: Uri::from_endpoint(&peer_uid, &endpoint_uid),
-        peer_uid: peer_uid,
         endpoint_uid: *endpoint_uid,
         endpoint_type: EndpointType::SystemDevice,
         stream_direction: EndpointDir::Output,

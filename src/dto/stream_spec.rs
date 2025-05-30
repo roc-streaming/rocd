@@ -21,7 +21,15 @@ pub struct StreamSpec {
 
 impl Validate for StreamSpec {
     fn validate(&self) -> ValidationResult {
-        self.stream_uri.validate_kind("stream_uri", UriKind::Stream)?;
+        if self.stream_uri.kind() != UriKind::Stream {
+            return Err(ValidationError::LayoutError("unexpected stream_uri format".into()));
+        }
+
+        if self.stream_uri.stream_uid().unwrap() != self.stream_uid {
+            return Err(ValidationError::LayoutError(
+                "UID mismatch in stream_uri and stream_uid fields".into(),
+            ));
+        }
 
         self.source.validate()?;
         self.destination.validate()?;
@@ -75,32 +83,40 @@ impl Validate for ConnectionSpec {
         };
 
         if specified_type != layout_type {
-            match specified_type {
-                ConnectionType::Endpoint => {
-                    return Err(ValidationError::EnumTypeError {
-                        key: "connection_type",
-                        value: "endpoint",
-                        allow_fields: "endpoint_uri",
-                    });
-                },
-                ConnectionType::External => {
-                    return Err(ValidationError::EnumTypeError {
-                        key: "connection_type",
-                        value: "external",
-                        allow_fields: "media_uri, repair_uri, control_uri",
-                    });
-                },
-            }
+            return Err(ValidationError::LayoutError(format!(
+                "when connection_type is '{}', allowed fields are: {}",
+                specified_type,
+                match specified_type {
+                    ConnectionType::Endpoint => "endpoint_uri",
+                    ConnectionType::External => "media_uri, repair_uri, control_uri",
+                }
+            )));
         }
 
         match self {
             ConnectionSpec::Endpoint { endpoint_uri, .. } => {
-                endpoint_uri.validate_kind("endpoint_uri", UriKind::Endpoint)?;
+                if endpoint_uri.kind() != UriKind::Endpoint {
+                    return Err(ValidationError::LayoutError(
+                        "unexpected endpoint_uri format".into(),
+                    ));
+                }
             },
             ConnectionSpec::External { media_uri, repair_uri, control_uri, .. } => {
-                media_uri.validate_kind("media_uri", UriKind::External)?;
-                repair_uri.validate_kind("repair_uri", UriKind::External)?;
-                control_uri.validate_kind("control_uri", UriKind::External)?;
+                if media_uri.kind() != UriKind::External {
+                    return Err(ValidationError::LayoutError(
+                        "unexpected media_uri format, must be external URI".into(),
+                    ));
+                }
+                if repair_uri.kind() != UriKind::External {
+                    return Err(ValidationError::LayoutError(
+                        "unexpected repair_uri format, must be external URI".into(),
+                    ));
+                }
+                if control_uri.kind() != UriKind::External {
+                    return Err(ValidationError::LayoutError(
+                        "unexpected control_uri format, must be external URI".into(),
+                    ));
+                }
             },
         }
 
@@ -147,7 +163,13 @@ mod tests {
                 spec.stream_uri = Uri::from_peer(&stream_uid);
                 spec
             },
-            // inconsistent connection_type in source
+            // UID mismatch in stream_uri and stream_uid
+            {
+                let mut spec = good_spec.clone();
+                spec.stream_uid = Uid::generate_random();
+                spec
+            },
+            // source.connection_type inconsistent with other fields
             {
                 let mut spec = good_spec.clone();
                 spec.source = ConnectionSpec::Endpoint {
@@ -156,7 +178,7 @@ mod tests {
                 };
                 spec
             },
-            // inconsistent connection_type in destination
+            // destination.connection_type inconsistent with other fields
             {
                 let mut spec = good_spec.clone();
                 spec.destination = ConnectionSpec::External {
@@ -212,7 +234,7 @@ mod tests {
         ];
 
         for spec in &bad_specs {
-            assert_err!(spec.validate());
+            assert_matches!(spec.validate(), Err(ValidationError::LayoutError(_)));
         }
     }
 }

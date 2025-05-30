@@ -363,7 +363,6 @@ pub mod types {
     ///    "endpoint_type",
     ///    "endpoint_uid",
     ///    "endpoint_uri",
-    ///    "peer_uid",
     ///    "stream_direction",
     ///    "system_name"
     ///  ],
@@ -383,9 +382,6 @@ pub mod types {
     ///    "endpoint_uri": {
     ///      "type": "string"
     ///    },
-    ///    "peer_uid": {
-    ///      "type": "string"
-    ///    },
     ///    "stream_direction": {
     ///      "$ref": "#/components/schemas/EndpointDir"
     ///    },
@@ -403,7 +399,6 @@ pub mod types {
         pub endpoint_type: EndpointType,
         pub endpoint_uid: ::std::string::String,
         pub endpoint_uri: ::std::string::String,
-        pub peer_uid: ::std::string::String,
         pub stream_direction: EndpointDir,
         pub system_name: ::std::string::String,
     }

@@ -158,7 +158,6 @@ components:
       type: object
       required:
       - endpoint_uri
-      - peer_uid
       - endpoint_uid
       - endpoint_type
       - stream_direction
@@ -167,8 +166,6 @@ components:
       - system_name
       properties:
         endpoint_uri:
-          type: string
-        peer_uid:
           type: string
         endpoint_uid:
           type: string

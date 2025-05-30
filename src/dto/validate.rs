@@ -1,16 +1,11 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-use crate::dto::uri::UriKind;
-
 use std::str::Utf8Error;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ValidationError {
-    #[error("when {key} is '{value}', allowed fields are: {allow_fields}")]
-    EnumTypeError { key: &'static str, value: &'static str, allow_fields: &'static str },
-
-    #[error("{key} must be {expected} URI, not {actual} URI")]
-    UriTypeError { key: &'static str, expected: UriKind, actual: UriKind },
+    #[error("{0}")]
+    LayoutError(String),
 
     #[error("invalid UID '{0}'")]
     UidFormatError(String),

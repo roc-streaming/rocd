@@ -24,7 +24,6 @@ async fn test_list_endpoints() {
             vec![EndpointSpec {
                 endpoint_uri: "/peers/111111-222222-333333/endpoints/444444-555555-666666"
                     .into(),
-                peer_uid: "111111-222222-333333".into(),
                 endpoint_uid: "444444-555555-666666".into(),
                 endpoint_type: EndpointType::SystemDevice,
                 stream_direction: EndpointDir::Output,
@@ -54,7 +53,6 @@ async fn test_read_endpoint() {
             EndpointSpec {
                 endpoint_uri: "/peers/111111-222222-333333/endpoints/444444-555555-666666"
                     .into(),
-                peer_uid: "111111-222222-333333".into(),
                 endpoint_uid: "444444-555555-666666".into(),
                 endpoint_type: EndpointType::SystemDevice,
                 stream_direction: EndpointDir::Output,
