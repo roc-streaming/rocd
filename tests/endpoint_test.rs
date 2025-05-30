@@ -14,9 +14,9 @@ async fn test_list_endpoints() {
     let server = Server::new();
     let client = Client::new(server.url());
 
-    {
+    for peer in ["111111-222222-333333", "self"] {
         // GET /peers/{peer_uid}/endpoints
-        let resp = client.list_endpoints("111111-222222-333333").await.unwrap();
+        let resp = client.list_endpoints(peer).await.unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
@@ -40,18 +40,15 @@ async fn test_read_endpoint() {
     let server = Server::new();
     let client = Client::new(server.url());
 
-    {
+    for peer in ["777777-888888-999999", "self"] {
         // GET /peers/{peer_uid}/endpoints/{endpoint_uid}
-        let resp = client
-            .read_endpoint("111111-222222-333333", "444444-555555-666666")
-            .await
-            .unwrap();
+        let resp = client.read_endpoint(peer, "444444-555555-666666").await.unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
             resp.into_inner(),
             EndpointSpec {
-                endpoint_uri: "/peers/111111-222222-333333/endpoints/444444-555555-666666"
+                endpoint_uri: "/peers/777777-888888-999999/endpoints/444444-555555-666666"
                     .into(),
                 endpoint_uid: "444444-555555-666666".into(),
                 endpoint_type: EndpointType::SystemDevice,

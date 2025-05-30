@@ -11,6 +11,10 @@ impl PeerDispatcher {
         PeerDispatcher {}
     }
 
+    pub async fn self_uid(&self) -> Uid {
+        Uid::parse("777777-888888-999999").unwrap()
+    }
+
     pub async fn get_all(&self) -> Vec<PeerSpec> {
         vec![self.get_peer(&Uid::parse("777777-888888-999999").unwrap()).await]
     }

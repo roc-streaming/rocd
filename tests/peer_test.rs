@@ -34,9 +34,9 @@ async fn test_read_peer() {
     let server = Server::new();
     let client = Client::new(server.url());
 
-    {
+    for peer in ["777777-888888-999999", "self"] {
         // GET /peers/{peer_uid}
-        let resp = client.read_peer("777777-888888-999999").await.unwrap();
+        let resp = client.read_peer(peer).await.unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(

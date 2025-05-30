@@ -87,7 +87,11 @@ async fn list_peers(
 async fn read_peer(
     Extension(controller): Extension<Arc<ApiController>>, Path(peer_uid): Path<String>,
 ) -> Result<Json<PeerSpec>> {
-    let peer_uid = Uid::parse(&peer_uid)?;
+    let peer_uid = if peer_uid == "self" {
+        controller.peer_dispatcher.self_uid().await
+    } else {
+        Uid::parse(&peer_uid)?
+    };
 
     Ok(Json(controller.peer_dispatcher.get_peer(&peer_uid).await))
 }
@@ -102,7 +106,11 @@ async fn read_peer(
 async fn update_peer(
     Extension(controller): Extension<Arc<ApiController>>, Path(peer_uid): Path<String>,
 ) -> Result<Json<PeerSpec>> {
-    let peer_uid = Uid::parse(&peer_uid)?;
+    let peer_uid = if peer_uid == "self" {
+        controller.peer_dispatcher.self_uid().await
+    } else {
+        Uid::parse(&peer_uid)?
+    };
 
     Ok(Json(controller.peer_dispatcher.get_peer(&peer_uid).await))
 }
@@ -119,7 +127,11 @@ async fn update_peer(
 async fn list_endpoints(
     Extension(controller): Extension<Arc<ApiController>>, Path(peer_uid): Path<String>,
 ) -> Result<Json<Vec<EndpointSpec>>> {
-    let peer_uid = Uid::parse(&peer_uid)?;
+    let peer_uid = if peer_uid == "self" {
+        controller.peer_dispatcher.self_uid().await
+    } else {
+        Uid::parse(&peer_uid)?
+    };
 
     Ok(Json(controller.endpoint_dispatcher.get_all(&peer_uid).await))
 }
@@ -135,7 +147,12 @@ async fn read_endpoint(
     Extension(controller): Extension<Arc<ApiController>>,
     Path((peer_uid, endpoint_uid)): Path<(String, String)>,
 ) -> Result<Json<EndpointSpec>> {
-    let peer_uid = Uid::parse(&peer_uid)?;
+    let peer_uid = if peer_uid == "self" {
+        controller.peer_dispatcher.self_uid().await
+    } else {
+        Uid::parse(&peer_uid)?
+    };
+
     let endpoint_uid = Uid::parse(&endpoint_uid)?;
 
     Ok(Json(controller.endpoint_dispatcher.get_endpoint(&peer_uid, &endpoint_uid).await))
@@ -152,7 +169,12 @@ async fn update_endpoint(
     Extension(controller): Extension<Arc<ApiController>>,
     Path((peer_uid, endpoint_uid)): Path<(String, String)>,
 ) -> Result<Json<EndpointSpec>> {
-    let peer_uid = Uid::parse(&peer_uid)?;
+    let peer_uid = if peer_uid == "self" {
+        controller.peer_dispatcher.self_uid().await
+    } else {
+        Uid::parse(&peer_uid)?
+    };
+
     let endpoint_uid = Uid::parse(&endpoint_uid)?;
 
     Ok(Json(controller.endpoint_dispatcher.get_endpoint(&peer_uid, &endpoint_uid).await))
