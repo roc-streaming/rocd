@@ -188,6 +188,87 @@ pub mod types {
             value.parse()
         }
     }
+    ///`DriverId`
+    ///
+    /// <details><summary>JSON schema</summary>
+    ///
+    /// ```json
+    ///{
+    ///  "type": "string",
+    ///  "enum": [
+    ///    "unspecified",
+    ///    "pipewire"
+    ///  ]
+    ///}
+    /// ```
+    /// </details>
+    #[derive(
+        ::serde::Deserialize,
+        ::serde::Serialize,
+        Clone,
+        Copy,
+        Debug,
+        Eq,
+        Hash,
+        Ord,
+        PartialEq,
+        PartialOrd
+    )]
+    pub enum DriverId {
+        #[serde(rename = "unspecified")]
+        Unspecified,
+        #[serde(rename = "pipewire")]
+        Pipewire,
+    }
+    impl ::std::convert::From<&Self> for DriverId {
+        fn from(value: &DriverId) -> Self {
+            value.clone()
+        }
+    }
+    impl ::std::fmt::Display for DriverId {
+        fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+            match *self {
+                Self::Unspecified => write!(f, "unspecified"),
+                Self::Pipewire => write!(f, "pipewire"),
+            }
+        }
+    }
+    impl ::std::str::FromStr for DriverId {
+        type Err = self::error::ConversionError;
+        fn from_str(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
+            match value {
+                "unspecified" => Ok(Self::Unspecified),
+                "pipewire" => Ok(Self::Pipewire),
+                _ => Err("invalid value".into()),
+            }
+        }
+    }
+    impl ::std::convert::TryFrom<&str> for DriverId {
+        type Error = self::error::ConversionError;
+        fn try_from(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
+            value.parse()
+        }
+    }
+    impl ::std::convert::TryFrom<&::std::string::String> for DriverId {
+        type Error = self::error::ConversionError;
+        fn try_from(
+            value: &::std::string::String,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
+            value.parse()
+        }
+    }
+    impl ::std::convert::TryFrom<::std::string::String> for DriverId {
+        type Error = self::error::ConversionError;
+        fn try_from(
+            value: ::std::string::String,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
+            value.parse()
+        }
+    }
     ///`EndpointDir`
     ///
     /// <details><summary>JSON schema</summary>
@@ -274,82 +355,6 @@ pub mod types {
             value.parse()
         }
     }
-    ///`EndpointDriver`
-    ///
-    /// <details><summary>JSON schema</summary>
-    ///
-    /// ```json
-    ///{
-    ///  "type": "string",
-    ///  "enum": [
-    ///    "pipewire"
-    ///  ]
-    ///}
-    /// ```
-    /// </details>
-    #[derive(
-        ::serde::Deserialize,
-        ::serde::Serialize,
-        Clone,
-        Copy,
-        Debug,
-        Eq,
-        Hash,
-        Ord,
-        PartialEq,
-        PartialOrd
-    )]
-    pub enum EndpointDriver {
-        #[serde(rename = "pipewire")]
-        Pipewire,
-    }
-    impl ::std::convert::From<&Self> for EndpointDriver {
-        fn from(value: &EndpointDriver) -> Self {
-            value.clone()
-        }
-    }
-    impl ::std::fmt::Display for EndpointDriver {
-        fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-            match *self {
-                Self::Pipewire => write!(f, "pipewire"),
-            }
-        }
-    }
-    impl ::std::str::FromStr for EndpointDriver {
-        type Err = self::error::ConversionError;
-        fn from_str(
-            value: &str,
-        ) -> ::std::result::Result<Self, self::error::ConversionError> {
-            match value {
-                "pipewire" => Ok(Self::Pipewire),
-                _ => Err("invalid value".into()),
-            }
-        }
-    }
-    impl ::std::convert::TryFrom<&str> for EndpointDriver {
-        type Error = self::error::ConversionError;
-        fn try_from(
-            value: &str,
-        ) -> ::std::result::Result<Self, self::error::ConversionError> {
-            value.parse()
-        }
-    }
-    impl ::std::convert::TryFrom<&::std::string::String> for EndpointDriver {
-        type Error = self::error::ConversionError;
-        fn try_from(
-            value: &::std::string::String,
-        ) -> ::std::result::Result<Self, self::error::ConversionError> {
-            value.parse()
-        }
-    }
-    impl ::std::convert::TryFrom<::std::string::String> for EndpointDriver {
-        type Error = self::error::ConversionError;
-        fn try_from(
-            value: ::std::string::String,
-        ) -> ::std::result::Result<Self, self::error::ConversionError> {
-            value.parse()
-        }
-    }
     ///`EndpointSpec`
     ///
     /// <details><summary>JSON schema</summary>
@@ -371,7 +376,7 @@ pub mod types {
     ///      "type": "string"
     ///    },
     ///    "driver": {
-    ///      "$ref": "#/components/schemas/EndpointDriver"
+    ///      "$ref": "#/components/schemas/DriverId"
     ///    },
     ///    "endpoint_type": {
     ///      "$ref": "#/components/schemas/EndpointType"
@@ -395,7 +400,7 @@ pub mod types {
     #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, PartialEq)]
     pub struct EndpointSpec {
         pub display_name: ::std::string::String,
-        pub driver: EndpointDriver,
+        pub driver: DriverId,
         pub endpoint_type: EndpointType,
         pub endpoint_uid: ::std::string::String,
         pub endpoint_uri: ::std::string::String,

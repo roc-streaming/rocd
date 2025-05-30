@@ -1,17 +1,20 @@
 // Copyright (c) Roc Peering authors
 // Licensed under MPL-2.0
 mod test_client;
+mod test_driver;
 mod test_server;
 
 use crate::test_client::Client;
 use crate::test_client::types::*;
+use crate::test_driver::MockDriver;
 use crate::test_server::Server;
 
 use reqwest::StatusCode;
 
 #[tokio::test]
 async fn test_list_peers() {
-    let server = Server::new();
+    let driver = MockDriver::open();
+    let server = Server::new(&driver);
     let client = Client::new(server.url());
 
     {
@@ -31,7 +34,8 @@ async fn test_list_peers() {
 
 #[tokio::test]
 async fn test_read_peer() {
-    let server = Server::new();
+    let driver = MockDriver::open();
+    let server = Server::new(&driver);
     let client = Client::new(server.url());
 
     for peer in ["777777-888888-999999", "self"] {

@@ -58,7 +58,7 @@ fn make_endpoint_spec<S: ToString>(endpoint_uid: &Uid, endpoint_name: S) -> Arc<
         endpoint_uid: *endpoint_uid,
         endpoint_type: EndpointType::SystemDevice,
         stream_direction: EndpointDir::Output,
-        driver: EndpointDriver::Pipewire,
+        driver: DriverId::Pipewire,
         display_name: "Test Name".into(),
         system_name: endpoint_name,
     })

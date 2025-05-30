@@ -1,14 +1,17 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
+use crate::drivers::*;
 use crate::dto::*;
 
+use std::sync::Arc;
+
 pub struct StreamDispatcher {
-    // TODO
+    driver: Arc<dyn Driver>,
 }
 
 impl StreamDispatcher {
-    pub fn new() -> Self {
-        StreamDispatcher {}
+    pub fn new(driver: &Arc<dyn Driver>) -> Self {
+        StreamDispatcher { driver: Arc::clone(driver) }
     }
 
     pub async fn get_all(&self) -> Vec<StreamSpec> {

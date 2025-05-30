@@ -306,18 +306,19 @@
           "external"
         ]
       },
+      "DriverId": {
+        "type": "string",
+        "enum": [
+          "unspecified",
+          "pipewire"
+        ]
+      },
       "EndpointDir": {
         "type": "string",
         "enum": [
           "input",
           "output",
           "duplex"
-        ]
-      },
-      "EndpointDriver": {
-        "type": "string",
-        "enum": [
-          "pipewire"
         ]
       },
       "EndpointSpec": {
@@ -345,7 +346,7 @@
             "$ref": "#/components/schemas/EndpointDir"
           },
           "driver": {
-            "$ref": "#/components/schemas/EndpointDriver"
+            "$ref": "#/components/schemas/DriverId"
           },
           "display_name": {
             "type": "string"

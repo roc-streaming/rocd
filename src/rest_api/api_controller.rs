@@ -23,10 +23,14 @@ pub struct ApiController {
 
 impl ApiController {
     pub fn new(
-        peer_dispatcher: Arc<PeerDispatcher>, endpoint_dispatcher: Arc<EndpointDispatcher>,
-        stream_dispatcher: Arc<StreamDispatcher>,
+        peer_dispatcher: &Arc<PeerDispatcher>, endpoint_dispatcher: &Arc<EndpointDispatcher>,
+        stream_dispatcher: &Arc<StreamDispatcher>,
     ) -> Self {
-        ApiController { peer_dispatcher, endpoint_dispatcher, stream_dispatcher }
+        ApiController {
+            peer_dispatcher: Arc::clone(peer_dispatcher),
+            endpoint_dispatcher: Arc::clone(endpoint_dispatcher),
+            stream_dispatcher: Arc::clone(stream_dispatcher),
+        }
     }
 
     pub fn spec() -> OpenApi {

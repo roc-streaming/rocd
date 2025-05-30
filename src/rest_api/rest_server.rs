@@ -39,8 +39,8 @@ struct ServerState {
 impl RestServer {
     /// Create unstarted server.
     pub fn new(
-        peer_dispatcher: Arc<PeerDispatcher>, endpoint_dispatcher: Arc<EndpointDispatcher>,
-        stream_dispatcher: Arc<StreamDispatcher>,
+        peer_dispatcher: &Arc<PeerDispatcher>, endpoint_dispatcher: &Arc<EndpointDispatcher>,
+        stream_dispatcher: &Arc<StreamDispatcher>,
     ) -> Self {
         let mut router = Router::new();
         let spec;
@@ -114,7 +114,7 @@ impl RestServer {
         let resolved_addr =
             tcp_listener.local_addr().map_err(|err| ServerError::BindError(err))?;
 
-        tracing::info!("starting server at http://{} ...", resolved_addr);
+        tracing::info!("starting server at http://{}", resolved_addr);
 
         let server_handle = ServerHandle::new();
         let server = Server::from_tcp(tcp_listener).handle(server_handle.clone());

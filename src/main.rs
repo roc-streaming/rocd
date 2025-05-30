@@ -1,5 +1,7 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
+use rocd::drivers::DriverRegistry;
+use rocd::dto::DriverId;
 use rocd::io_endpoints::EndpointDispatcher;
 use rocd::io_streams::StreamDispatcher;
 use rocd::p2p::PeerDispatcher;
@@ -16,12 +18,25 @@ use tracing_subscriber::fmt::time::LocalTime;
 #[derive(Parser, Debug)]
 #[command(about = "rocd server")]
 struct CliArgs {
-    /// host:port to run http server at
+    /// HOST:PORT to bind HTTP server to.
     #[arg(short, long, value_name = "HOST:PORT", default_value = "127.0.0.1:4040")]
     addr: String,
 
+    /// Driver for audio devices.
+    #[arg(short, long, value_enum, value_name = "DRIVER")]
+    driver: Option<DriverId>,
+
+    /// Increase verbosity (can be specified more than once).
     #[arg(short, long, action = ArgAction::Count)]
     verbose: u8,
+}
+
+/// Report error and exit.
+macro_rules! oops {
+    ($fmt:expr $(,$args:expr)*) => ({
+        tracing::error!($fmt, $($args),*);
+        process::exit(1);
+    });
 }
 
 #[tokio::main]
@@ -30,31 +45,39 @@ async fn main() {
 
     init_tracing(args.verbose);
 
-    tracing::info!("starting server with options {args:?}");
+    tracing::info!("running with {args:?}");
 
     let addr = match SocketAddr::from_str(&args.addr) {
         Ok(addr) => addr,
-        Err(err) => {
-            tracing::error!("invalid --addr: {err}");
-            process::exit(1);
-        },
+        Err(err) => oops!("invalid --addr: {err}"),
+    };
+
+    let driver_registry = DriverRegistry::new();
+
+    let driver = match args.driver {
+        Some(driver_id) => driver_registry
+            .open_driver_by_id(driver_id)
+            .inspect_err(|err| oops!("can't open driver {driver_id}: {err}"))
+            .unwrap(),
+        None => driver_registry
+            .open_driver()
+            .inspect_err(|err| oops!("can't open driver: {err}"))
+            .unwrap(),
     };
 
     let peer_dispatcher = Arc::new(PeerDispatcher::new());
-    let endpoint_dispatcher = Arc::new(EndpointDispatcher::new());
-    let stream_dispatcher = Arc::new(StreamDispatcher::new());
+    let endpoint_dispatcher = Arc::new(EndpointDispatcher::new(&driver));
+    let stream_dispatcher = Arc::new(StreamDispatcher::new(&driver));
 
     let server =
-        Arc::new(RestServer::new(peer_dispatcher, endpoint_dispatcher, stream_dispatcher));
+        Arc::new(RestServer::new(&peer_dispatcher, &endpoint_dispatcher, &stream_dispatcher));
 
     if let Err(err) = server.start(addr).await {
-        tracing::error!("http server failed to start: {err}");
-        process::exit(1);
+        oops!("can't start http server: {err}");
     }
 
     if let Err(err) = server.wait().await {
-        tracing::error!("http server failed: {err}");
-        process::exit(1);
+        oops!("http server failed: {err}");
     }
 }
 

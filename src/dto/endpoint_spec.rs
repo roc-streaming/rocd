@@ -1,5 +1,6 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
+use crate::dto::driver::*;
 use crate::dto::uid::*;
 use crate::dto::uri::*;
 use crate::dto::validate::*;
@@ -17,7 +18,7 @@ pub struct EndpointSpec {
 
     pub endpoint_type: EndpointType,
     pub stream_direction: EndpointDir,
-    pub driver: EndpointDriver,
+    pub driver: DriverId,
 
     pub display_name: String,
     pub system_name: String,
@@ -56,13 +57,6 @@ pub enum EndpointDir {
     Duplex,
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, strum::Display, Serialize, Deserialize, ToSchema)]
-#[serde(rename_all = "snake_case")]
-#[strum(serialize_all = "snake_case")]
-pub enum EndpointDriver {
-    Pipewire,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -78,7 +72,7 @@ mod tests {
             endpoint_uid,
             endpoint_type: EndpointType::SystemDevice,
             stream_direction: EndpointDir::Duplex,
-            driver: EndpointDriver::Pipewire,
+            driver: DriverId::Pipewire,
             display_name: "test".into(),
             system_name: "test".into(),
         };

@@ -1,17 +1,20 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
 mod test_client;
+mod test_driver;
 mod test_server;
 
 use crate::test_client::Client;
 use crate::test_client::types::*;
+use crate::test_driver::MockDriver;
 use crate::test_server::Server;
 
 use reqwest::StatusCode;
 
 #[tokio::test]
 async fn test_list_endpoints() {
-    let server = Server::new();
+    let driver = MockDriver::open();
+    let server = Server::new(&driver);
     let client = Client::new(server.url());
 
     for peer in ["111111-222222-333333", "self"] {
@@ -27,7 +30,7 @@ async fn test_list_endpoints() {
                 endpoint_uid: "444444-555555-666666".into(),
                 endpoint_type: EndpointType::SystemDevice,
                 stream_direction: EndpointDir::Output,
-                driver: EndpointDriver::Pipewire,
+                driver: DriverId::Pipewire,
                 display_name: "Display Name".into(),
                 system_name: "system_name".into(),
             }],
@@ -37,7 +40,8 @@ async fn test_list_endpoints() {
 
 #[tokio::test]
 async fn test_read_endpoint() {
-    let server = Server::new();
+    let driver = MockDriver::open();
+    let server = Server::new(&driver);
     let client = Client::new(server.url());
 
     for peer in ["777777-888888-999999", "self"] {
@@ -53,7 +57,7 @@ async fn test_read_endpoint() {
                 endpoint_uid: "444444-555555-666666".into(),
                 endpoint_type: EndpointType::SystemDevice,
                 stream_direction: EndpointDir::Output,
-                driver: EndpointDriver::Pipewire,
+                driver: DriverId::Pipewire,
                 display_name: "Display Name".into(),
                 system_name: "system_name".into(),
             },

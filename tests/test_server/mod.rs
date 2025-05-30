@@ -1,5 +1,6 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
+use rocd::drivers::Driver;
 use rocd::io_endpoints::EndpointDispatcher;
 use rocd::io_streams::StreamDispatcher;
 use rocd::p2p::PeerDispatcher;
@@ -23,13 +24,13 @@ pub struct Server {
 
 impl Server {
     /// Create and start server.
-    pub fn new() -> Self {
+    pub fn new(driver: &Arc<dyn Driver>) -> Self {
         let peer_dispatcher = Arc::new(PeerDispatcher::new());
-        let endpoint_dispatch = Arc::new(EndpointDispatcher::new());
-        let stream_dispatch = Arc::new(StreamDispatcher::new());
+        let endpoint_dispatch = Arc::new(EndpointDispatcher::new(driver));
+        let stream_dispatch = Arc::new(StreamDispatcher::new(driver));
 
         let server =
-            Arc::new(RestServer::new(peer_dispatcher, endpoint_dispatch, stream_dispatch));
+            Arc::new(RestServer::new(&peer_dispatcher, &endpoint_dispatch, &stream_dispatch));
 
         let (tx_addr, rx_addr) = std::sync::mpsc::channel();
         let (tx_stop, rx_stop) = tokio::sync::oneshot::channel();

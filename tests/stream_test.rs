@@ -1,17 +1,20 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
 mod test_client;
+mod test_driver;
 mod test_server;
 
 use crate::test_client::Client;
 use crate::test_client::types::*;
+use crate::test_driver::MockDriver;
 use crate::test_server::Server;
 
 use reqwest::StatusCode;
 
 #[tokio::test]
 async fn test_list_streams() {
-    let server = Server::new();
+    let driver = MockDriver::open();
+    let server = Server::new(&driver);
     let client = Client::new(server.url());
 
     {
@@ -42,7 +45,8 @@ async fn test_list_streams() {
 
 #[tokio::test]
 async fn test_read_stream() {
-    let server = Server::new();
+    let driver = MockDriver::open();
+    let server = Server::new(&driver);
     let client = Client::new(server.url());
 
     {
