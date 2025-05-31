@@ -64,10 +64,12 @@ async fn main() {
     let driver = match args.driver {
         Some(driver_id) => driver_registry
             .open_driver_by_id(driver_id)
+            .await
             .inspect_err(|err| oops!("can't open driver {driver_id}: {err}"))
             .unwrap(),
         None => driver_registry
             .open_driver()
+            .await
             .inspect_err(|err| oops!("can't open driver: {err}"))
             .unwrap(),
     };
@@ -86,6 +88,8 @@ async fn main() {
     if let Err(err) = server.wait().await {
         oops!("http server failed: {err}");
     }
+
+    driver.close().await;
 }
 
 fn init_tracing(verbosity: u8) {

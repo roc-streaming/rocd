@@ -8,18 +8,41 @@ use crate::test_client::Client;
 use crate::test_client::types::*;
 use crate::test_driver::MockDriver;
 use crate::test_server::Server;
+use rocd::drivers::Driver;
 
 use reqwest::StatusCode;
+use std::sync::Arc;
+use test_context::{AsyncTestContext, test_context};
+use tracing_test::traced_test;
 
+struct EndpointTestContext {
+    driver: Arc<dyn Driver>,
+    server: Server,
+    client: Client,
+}
+
+impl AsyncTestContext for EndpointTestContext {
+    async fn setup() -> EndpointTestContext {
+        let driver = MockDriver::open().await.unwrap();
+        let server = Server::start(&driver).await;
+        let client = Client::new(server.url());
+
+        EndpointTestContext { driver, server, client }
+    }
+
+    async fn teardown(self) {
+        self.server.shutdown().await;
+        self.driver.close().await;
+    }
+}
+
+#[test_context(EndpointTestContext)]
 #[tokio::test]
-async fn test_list_endpoints() {
-    let driver = MockDriver::open();
-    let server = Server::new(&driver);
-    let client = Client::new(server.url());
-
+#[traced_test]
+async fn test_list_endpoints(ctx: &mut EndpointTestContext) {
     for peer in ["111111-222222-333333", "self"] {
         // GET /peers/{peer_uid}/endpoints
-        let resp = client.list_endpoints(peer).await.unwrap();
+        let resp = ctx.client.list_endpoints(peer).await.unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
@@ -38,15 +61,13 @@ async fn test_list_endpoints() {
     }
 }
 
+#[test_context(EndpointTestContext)]
 #[tokio::test]
-async fn test_read_endpoint() {
-    let driver = MockDriver::open();
-    let server = Server::new(&driver);
-    let client = Client::new(server.url());
-
+#[traced_test]
+async fn test_read_endpoint(ctx: &mut EndpointTestContext) {
     for peer in ["777777-888888-999999", "self"] {
         // GET /peers/{peer_uid}/endpoints/{endpoint_uid}
-        let resp = client.read_endpoint(peer, "444444-555555-666666").await.unwrap();
+        let resp = ctx.client.read_endpoint(peer, "444444-555555-666666").await.unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(

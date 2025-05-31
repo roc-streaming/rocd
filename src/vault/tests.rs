@@ -12,7 +12,8 @@ use tempfile::TempDir;
 use tracing_test::traced_test;
 
 #[ctor]
-fn setup() {
+fn setup_tests() {
+    // for procspawn::spawn() used in some tests
     procspawn::init();
 }
 
