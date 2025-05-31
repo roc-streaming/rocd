@@ -71,7 +71,7 @@ impl Db {
             move || -> Result<Database> { Ok(Database::create(db_path)?) }
         })
         .await
-        .unwrap(); // panic if tokio failed to run task
+        .expect("task panicked");
 
         Ok(Arc::new(Db {
             handle: task_result?,
@@ -132,7 +132,7 @@ impl Db {
             }
         })
         .await
-        .unwrap(); // panic if tokio failed to run task
+        .expect("task panicked");
 
         // get uids from db or propagate error
         let uids: Arc<HashSet<Uid>> = task_result?;
@@ -185,7 +185,7 @@ impl Db {
             }
         })
         .await
-        .unwrap(); // panic if tokio failed to run task
+        .expect("task panicked");
 
         // get value from db or propagate error
         let value: Arc<T> = task_result?;
@@ -239,7 +239,7 @@ impl Db {
             }
         })
         .await
-        .unwrap(); // panic if tokio failed to run task
+        .expect("task panicked");
 
         task_result
     }
@@ -280,7 +280,7 @@ impl Db {
             }
         })
         .await
-        .unwrap(); // panic if tokio failed to run task
+        .expect("task panicked");
 
         task_result
     }

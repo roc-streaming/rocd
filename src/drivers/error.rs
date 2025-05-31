@@ -12,4 +12,7 @@ pub enum DriverError {
 
     #[error("can't open driver: {0}")]
     OpenError(String),
+
+    #[error("lost connection to driver")]
+    ConnectionError,
 }

@@ -10,11 +10,14 @@ pub type DriverResult<T> = std::result::Result<T, DriverError>;
 
 #[async_trait]
 pub trait Driver: Send + Sync {
+    /// Open driver.
     async fn open() -> DriverResult<Arc<dyn Driver>>
     where
         Self: Sized;
 
-    async fn close(&self);
+    /// Close driver.
+    async fn close(self: Arc<Self>);
 
+    /// Get driver ID.
     fn id(&self) -> DriverId;
 }

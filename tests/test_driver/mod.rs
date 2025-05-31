@@ -16,7 +16,7 @@ impl Driver for MockDriver {
         Ok(Arc::new(MockDriver {}))
     }
 
-    async fn close(&self) {
+    async fn close(self: Arc<Self>) {
         tracing::debug!("closing mock driver");
     }
 

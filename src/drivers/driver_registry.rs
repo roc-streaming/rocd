@@ -48,8 +48,9 @@ impl DriverRegistry {
             if let Some(driver_fn) = self.driver_map.get(&driver_id) {
                 result = driver_fn().await;
 
-                if result.is_ok() {
-                    break;
+                if let Ok(driver) = result {
+                    tracing::debug!("successfully opened driver: {:?}", driver.id());
+                    return Ok(driver);
                 }
             }
         }
@@ -66,6 +67,13 @@ impl DriverRegistry {
         let driver_fn =
             self.driver_map.get(&driver_id).ok_or(DriverError::UnsupportedError(driver_id))?;
 
-        driver_fn().await
+        let result = driver_fn().await;
+
+        if let Ok(driver) = result {
+            tracing::debug!("successfully opened driver: {:?}", driver.id());
+            return Ok(driver);
+        }
+
+        result
     }
 }
