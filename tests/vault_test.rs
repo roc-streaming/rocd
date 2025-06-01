@@ -1,7 +1,7 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
-use crate::dto::*;
-use crate::vault::*;
+use rocd::dto::*;
+use rocd::vault::*;
 
 use assertables::*;
 use ctor::ctor;

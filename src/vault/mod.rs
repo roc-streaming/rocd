@@ -2,8 +2,6 @@
 // Licensed under MPL-2.0
 mod db;
 mod error;
-#[cfg(test)]
-mod tests;
 
 use crate::dto::*;
 use crate::vault::db::{Db, Table};

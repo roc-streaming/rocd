@@ -50,6 +50,7 @@ impl DriverRegistry {
 
                 if let Ok(driver) = result {
                     tracing::debug!("successfully opened driver: {:?}", driver.id());
+                    assert!(driver.id() == driver_id);
                     return Ok(driver);
                 }
             }
@@ -71,6 +72,7 @@ impl DriverRegistry {
 
         if let Ok(driver) = result {
             tracing::debug!("successfully opened driver: {:?}", driver.id());
+            assert!(driver.id() == driver_id);
             return Ok(driver);
         }
 
