@@ -37,8 +37,15 @@ impl DriverRegistry {
         DriverRegistry { driver_map }
     }
 
+    /// Get list of drivers enabled at compile time.
+    pub fn supported_drivers(&self) -> Vec<DriverId> {
+        // return drivers in order as they are defined in DriverId enum,
+        // the same order as they are probed in open_default_driver()
+        DriverId::iter().filter(|driver_id| self.driver_map.contains_key(driver_id)).collect()
+    }
+
     /// Detect first supported driver and open it.
-    pub async fn open_driver(&self) -> DriverResult<Arc<dyn Driver>> {
+    pub async fn open_default_driver(&self) -> DriverResult<Arc<dyn Driver>> {
         tracing::debug!("iterating suported drivers: {:?}", self.driver_map.keys());
 
         let mut result = Err(DriverError::NoDriversError);
@@ -60,9 +67,7 @@ impl DriverRegistry {
     }
 
     /// Open specific driver.
-    pub async fn open_driver_by_id(
-        &self, driver_id: DriverId,
-    ) -> DriverResult<Arc<dyn Driver>> {
+    pub async fn open_driver(&self, driver_id: DriverId) -> DriverResult<Arc<dyn Driver>> {
         tracing::debug!("trying to open driver: {driver_id:?}");
 
         let driver_fn =

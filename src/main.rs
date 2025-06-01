@@ -63,14 +63,14 @@ async fn main() {
 
     let driver = match args.driver {
         Some(driver_id) => driver_registry
-            .open_driver_by_id(driver_id)
+            .open_driver(driver_id)
             .await
             .inspect_err(|err| oops!("can't open driver {driver_id}: {err}"))
             .unwrap(),
         None => driver_registry
-            .open_driver()
+            .open_default_driver()
             .await
-            .inspect_err(|err| oops!("can't open driver: {err}"))
+            .inspect_err(|err| oops!("can't open default driver: {err}"))
             .unwrap(),
     };
 

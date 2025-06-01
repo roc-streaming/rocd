@@ -21,7 +21,7 @@ os.environ['TERM'] = 'xterm-color'
 
 @functools.cache
 def _features():
-    feat = []
+    feat = ['driver-tests']
     if platform.system() == 'Linux':
         feat += ['pipewire']
 

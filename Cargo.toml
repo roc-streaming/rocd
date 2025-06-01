@@ -26,6 +26,7 @@ license = "MPL-2.0"
 [features]
 default = ["daemon"]
 daemon = []
+driver-tests = []
 pipewire = ["dep:pipewire"]
 
 [lib]
