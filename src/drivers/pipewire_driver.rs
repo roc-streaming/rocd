@@ -6,6 +6,7 @@ use crate::dto::DriverId;
 
 use async_trait::async_trait;
 use pipewire::main_loop::MainLoop;
+use std::rc::Rc;
 use std::sync::Arc;
 use std::thread::{self};
 use tokio::sync::Mutex;
@@ -13,8 +14,7 @@ use tokio::task;
 
 /// Driver implementation for pipewire.
 pub struct PipewireDriver {
-    worker: Arc<PipewireLoop>,
-    worker_handle: Mutex<Option<thread::JoinHandle<()>>>,
+    conn: Arc<PwConn>,
 }
 
 #[async_trait]
@@ -22,30 +22,15 @@ impl Driver for PipewireDriver {
     async fn open() -> DriverResult<Arc<dyn Driver>> {
         tracing::debug!("opening pipewire driver");
 
-        let (worker, worker_handle) = PipewireLoop::start().await?;
+        let conn = PwConn::open().await?;
 
-        let driver = Arc::new(PipewireDriver {
-            worker,
-            worker_handle: Mutex::new(Some(worker_handle)),
-        });
-
-        Ok(driver)
+        Ok(Arc::new(PipewireDriver { conn: Arc::new(conn) }))
     }
 
     async fn close(self: Arc<Self>) {
-        let worker_handle = { self.worker_handle.lock().await.take() };
+        tracing::debug!("closing pipewire driver");
 
-        if let Some(worker_handle) = worker_handle {
-            tracing::debug!("closing pipewire driver");
-
-            _ = self.worker.exec(Cmd::Close).await;
-
-            task::spawn_blocking(move || {
-                worker_handle.join().expect("pipewire thread panicked");
-            })
-            .await
-            .expect("task panicked");
-        }
+        self.conn.close().await;
     }
 
     fn id(&self) -> DriverId {
@@ -53,115 +38,132 @@ impl Driver for PipewireDriver {
     }
 }
 
+/// Async task for pipewire mainloop.
 #[derive(Debug)]
-struct PipewireTask {
-    cmd: Cmd,
-    output: tokio::sync::oneshot::Sender<CmdOutput>,
+struct PwTask {
+    cmd: PwCmd,
+    out: tokio::sync::oneshot::Sender<PwCmdOut>,
 }
 
 #[derive(Debug)]
-enum Cmd {
+enum PwCmd {
     Close,
 }
 
 #[derive(Debug)]
-enum CmdOutput {
+enum PwCmdOut {
     None,
 }
 
-struct PipewireLoop {
-    task_sender: pipewire::channel::Sender<PipewireTask>,
+/// Async connector to pipewire mainloop.
+struct PwConn {
+    task_tx: pipewire::channel::Sender<PwTask>,
+    thread_handle: Mutex<Option<thread::JoinHandle<()>>>,
 }
 
-impl PipewireLoop {
-    /// Start pipewire mainloop.
-    async fn start() -> DriverResult<(Arc<PipewireLoop>, thread::JoinHandle<()>)> {
-        let (open_sender, open_receiver) = tokio::sync::oneshot::channel();
-        let (task_sender, task_receiver) = pipewire::channel::channel();
+impl PwConn {
+    async fn open() -> DriverResult<PwConn> {
+        let (open_tx, open_rx) = tokio::sync::oneshot::channel();
+        let (task_tx, task_rx) = pipewire::channel::channel();
 
-        let worker = Arc::new(PipewireLoop { task_sender });
+        let thread_handle = thread::spawn(move || {
+            let pw_loop = match PwLoop::new() {
+                Ok(pw_loop) => {
+                    tracing::trace!("sending open ok");
+                    open_tx.send(Ok(())).unwrap();
+                    Rc::new(pw_loop)
+                },
+                Err(err) => {
+                    tracing::trace!("sending open err");
+                    open_tx.send(Err(err)).unwrap();
+                    return;
+                },
+            };
 
-        let worker_handle = thread::spawn({
-            let worker = Arc::clone(&worker);
-            move || worker.run_loop(open_sender, task_receiver)
+            pw_loop.run(task_rx);
         });
 
-        let open_result = open_receiver.await.map_err(|_err| DriverError::ConnectionError)?;
+        tracing::trace!("waiting open result");
+        let open_result = open_rx.await.map_err(|_err| DriverError::ConnectionError)?;
         open_result?;
 
-        Ok((worker, worker_handle))
+        Ok(PwConn { task_tx, thread_handle: Mutex::new(Some(thread_handle)) })
     }
 
-    /// Execute command on pipewire mainloop and return its result.
-    async fn exec(self: &Arc<Self>, cmd: Cmd) -> DriverResult<CmdOutput> {
-        let (result_tx, result_rx) = tokio::sync::oneshot::channel();
+    async fn close(self: &Arc<Self>) {
+        let thread_handle = { self.thread_handle.lock().await.take() };
 
-        // send task to main loop
+        if let Some(thread_handle) = thread_handle {
+            _ = self.task(PwCmd::Close).await;
+
+            tracing::trace!("waiting thread");
+            task::spawn_blocking(move || {
+                thread_handle.join().expect("pipewire thread panicked");
+            })
+            .await
+            .expect("task panicked");
+        }
+    }
+
+    async fn task(self: &Arc<Self>, cmd: PwCmd) -> DriverResult<PwCmdOut> {
+        let (out_tx, out_rx) = tokio::sync::oneshot::channel();
+
+        tracing::trace!("scheduling task");
         let send_result = task::spawn_blocking({
-            let self_clone = Arc::clone(self);
-            move || {
-                // writing to pipewire::channel may block
-                self_clone.task_sender.send(PipewireTask { cmd, output: result_tx })
-            }
+            let this = Arc::clone(self);
+            move || this.task_tx.send(PwTask { cmd, out: out_tx })
         })
         .await
         .expect("task panicked");
 
         send_result.map_err(|_err| DriverError::ConnectionError)?;
 
-        // wait result from main loop
-        let recv_result = result_rx.await;
+        tracing::trace!("waiting task result");
+        let recv_result = out_rx.await;
 
         recv_result.map_err(|_err| DriverError::ConnectionError)
     }
+}
 
-    /// Mainloop thread.
-    /// Communicates with pipewire and executes tasks.
-    fn run_loop(
-        self: &Arc<Self>, open_sender: tokio::sync::oneshot::Sender<DriverResult<()>>,
-        task_receiver: pipewire::channel::Receiver<PipewireTask>,
-    ) {
-        tracing::debug!("entering pipewire mainloop");
+/// Single-threaded pipewire mainloop.
+struct PwLoop {
+    mainloop: MainLoop,
+}
 
-        let mainloop = match MainLoop::new(None) {
-            Ok(mainloop) => {
-                tracing::trace!("sending open ok");
-                open_sender.send(Ok(())).unwrap();
-                mainloop
-            },
-            Err(err) => {
-                tracing::trace!("sending open err");
-                open_sender.send(Err(DriverError::OpenError(err.to_string()))).unwrap();
-                return;
-            },
-        };
+impl PwLoop {
+    fn new() -> DriverResult<PwLoop> {
+        tracing::debug!("creating mainloop");
 
-        let _handle = task_receiver.attach(mainloop.loop_(), {
-            let self_clone = Arc::clone(&self);
-            let mainloop_clone = mainloop.clone();
+        let mainloop =
+            MainLoop::new(None).map_err(|err| DriverError::OpenError(err.to_string()))?;
 
-            move |task| {
-                tracing::trace!("received task");
-                let cmd_out = self_clone.process_cmd(&mainloop_clone, &task.cmd);
-
-                tracing::trace!("sending task result");
-                task.output.send(cmd_out).unwrap();
-            }
-        });
-
-        mainloop.run();
-
-        tracing::debug!("leaving pipewire mainloop");
+        Ok(PwLoop { mainloop })
     }
 
-    /// Process command from task.
-    fn process_cmd(self: &Arc<Self>, mainloop: &MainLoop, cmd: &Cmd) -> CmdOutput {
-        tracing::debug!("processing command {:?}", cmd);
+    fn run(self: &Rc<Self>, task_rx: pipewire::channel::Receiver<PwTask>) {
+        tracing::debug!("running mainloop");
 
+        let _rx_handle = task_rx.attach(self.mainloop.loop_(), {
+            let this = Rc::clone(self);
+            move |task| this.process_task(task)
+        });
+
+        self.mainloop.run()
+    }
+
+    fn process_task(self: &Rc<Self>, task: PwTask) {
+        tracing::trace!("processing command: {:?}", task.cmd);
+        let cmd_out = self.process_cmd(&task.cmd);
+
+        tracing::trace!("sending result: {:?}", cmd_out);
+        task.out.send(cmd_out).unwrap();
+    }
+
+    fn process_cmd(self: &Rc<Self>, cmd: &PwCmd) -> PwCmdOut {
         match cmd {
-            Cmd::Close => {
-                mainloop.quit();
-                CmdOutput::None
+            PwCmd::Close => {
+                self.mainloop.quit();
+                PwCmdOut::None
             },
         }
     }
