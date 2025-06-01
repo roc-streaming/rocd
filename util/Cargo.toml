@@ -9,7 +9,7 @@ path = "codegen.rs"
 test = false
 
 [dependencies]
-prettyplease = "0.2.32"
+prettyplease = "0.2.33"
 progenitor = "0.10.0"
 syn = "2.0.101"
 
