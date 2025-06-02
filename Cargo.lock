@@ -1202,7 +1202,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.53.0",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -1613,24 +1613,9 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7b99ef43fdd69d70aa4df8869db24b10ac704a2dbbc387ffac51944a1f3c0a8"
 dependencies = [
- "progenitor-client 0.11.0",
+ "progenitor-client",
  "progenitor-impl",
  "progenitor-macro",
-]
-
-[[package]]
-name = "progenitor-client"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "296003fd74e64c77aeb2c10eae850eb543211a8557dd3b3de6f4230b5071e44b"
-dependencies = [
- "bytes",
- "futures-core",
- "percent-encoding",
- "reqwest",
- "serde",
- "serde_json",
- "serde_urlencoded",
 ]
 
 [[package]]
@@ -1974,7 +1959,7 @@ dependencies = [
  "derive_builder",
  "pipewire",
  "procspawn",
- "progenitor-client 0.10.0",
+ "progenitor-client",
  "quick_cache",
  "rand 0.9.1",
  "redb",
