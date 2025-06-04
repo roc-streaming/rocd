@@ -1957,6 +1957,7 @@ dependencies = [
  "clap",
  "ctor",
  "derive_builder",
+ "libspa",
  "pipewire",
  "procspawn",
  "progenitor-client",

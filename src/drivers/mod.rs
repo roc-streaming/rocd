@@ -5,7 +5,7 @@ mod driver_registry;
 mod error;
 
 #[cfg(feature = "pipewire")]
-mod pipewire_driver;
+mod pipewire;
 
 pub use self::driver::*;
 pub use self::driver_registry::*;

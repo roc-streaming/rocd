@@ -5,7 +5,7 @@ use crate::drivers::error::*;
 use crate::dto::DriverId;
 
 #[cfg(feature = "pipewire")]
-use crate::drivers::pipewire_driver::PipewireDriver;
+use crate::drivers::pipewire::PipewireDriver;
 
 use std::collections::HashMap;
 use std::pin::Pin;

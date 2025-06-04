@@ -68,6 +68,7 @@ features = ["json", "stream"]
 async-trait = "0.1.88"
 axum-server = "0.7.2"
 derive_builder = "0.20.2"
+libspa = "0.8.0"
 quick_cache = "0.6.13"
 rand = "0.9.1"
 redb = "2.4.0"
