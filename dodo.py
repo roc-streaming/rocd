@@ -1,3 +1,4 @@
+from doit import get_var
 from doit.tools import title_with_actions, Interactive
 import atexit
 import functools
@@ -19,13 +20,48 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 os.environ['TERM'] = 'xterm-color'
 
-@functools.cache
-def _features():
-    feat = ['driver-tests']
-    if platform.system() == 'Linux':
-        feat += ['pipewire']
+ARGS = {
+    'profile': get_var('profile', 'dev'),
+    'features': get_var('features', None),
+    'werror': get_var('werror', 'true'),
+}
 
-    return ','.join(feat)
+DOIT_CONFIG = {
+    'default_tasks': ['all'],
+    'verbosity': 2,
+}
+
+@functools.cache
+def _cargo_flags():
+    flags = [
+        '--profile=' + ARGS['profile'],
+    ]
+
+    if ARGS['features'] is not None:
+        flags += [
+            '--no-default-features',
+            '--features=' + str(ARGS['features']),
+        ]
+    else:
+        features = ['driver-tests']
+        if platform.system() == 'Linux':
+            features += ['pipewire']
+
+        flags += ['--features=' + ','.join(features)]
+
+    return flags
+
+@functools.cache
+def _cargo_env():
+    env = {}
+    if _truish(ARGS['werror']):
+        env['RUSTFLAGS'] = '--deny warnings'
+
+    return env
+
+@functools.cache
+def _truish(arg):
+    return str(arg).lower() in ['true', 'yes', 'on', '1']
 
 @functools.cache
 def _colors_supported():
@@ -35,6 +71,7 @@ def _colors_supported():
             colorama.init(autoreset=False)
             return True
     except ImportError:
+        print('hint: install colorama python package to enable colors in doit')
         pass
     return False
 
@@ -64,11 +101,6 @@ def _delete_files(pattern):
                 os.remove(path)
     return task
 
-DOIT_CONFIG = {
-    'default_tasks': ['all'],
-    'verbosity': 2,
-}
-
 # doit all
 def task_all():
     """default target"""
@@ -92,17 +124,15 @@ def task_build():
 # doit build_crate
 def task_build_crate():
     """build daemon"""
-    command = ['cargo', 'build', '--workspace']
-    feat = _features()
-    if feat:
-        command += ['--features', feat]
+    command = ['cargo', 'build', '--workspace'] + _cargo_flags()
 
     return {
         'basename': 'build_crate',
         'actions': [
             Interactive(
                 shlex.join(command),
-                env={**os.environ, **{'RUSTFLAGS': '--deny warnings'}}),
+                env={**os.environ, **_cargo_env()},
+            ),
         ],
         'title': _color_title,
     }
@@ -153,10 +183,7 @@ def task_lint():
 # doit test
 def task_test():
     """run tests"""
-    command = ['cargo', 'test']
-    feat = _features()
-    if feat:
-        command += ['--features', feat]
+    command = ['cargo', 'test'] + _cargo_flags()
 
     return {
         'basename': 'test',
