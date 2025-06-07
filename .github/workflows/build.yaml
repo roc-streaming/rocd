@@ -26,8 +26,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux:
+  # devloper build (using doit)
+  linux-devel:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default
+            flags:
+            libs: pipewire libpipewire-0.3-dev libspa-0.2-dev
+            init: systemctl --user start pipewire
+
+          - name: pipewire
+            flags: features=daemon,driver-tests,pipewire
+            libs: pipewire libpipewire-0.3-dev libspa-0.2-dev
+            init: systemctl --user start pipewire
+
+          - name: minimal-daemon
+            flags: features=daemon
+            libs:
+
+          - name: minimal-lib
+            flags: features=
+            libs:
+
+    name: linux-dev/${{ matrix.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,14 +60,77 @@ jobs:
       - name: Install rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Build
-        run: |
-          cargo build
+      - name: Install libs
+        uses: roc-streaming/ci/actions/install-packages@main
+        with:
+          packages: ${{ matrix.libs }}
 
-      - name: Lint
-        run: |
-          cargo clippy
+      - name: Install python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
 
-      - name: Test
+      - name: Install doit
         run: |
-          cargo test
+          pip install doit
+
+      - name: Run init
+        run: |
+          ${{ matrix.init }}
+
+      - name: Dev profile
+        run: |
+          doit all ${{ matrix.flags }}
+
+      - name: Release profile
+        run: |
+          doit all profile=release ${{ matrix.flags }}
+
+  # user build (using cargo install)
+  linux-user:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default
+            flags: --features=
+            libs:
+
+          - name: pipewire
+            flags: --features=pipewire
+            libs: libpipewire-0.3-dev libspa-0.2-dev
+
+    name: linux-user/${{ matrix.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install libs
+        uses: roc-streaming/ci/actions/install-packages@main
+        with:
+          packages: ${{ matrix.libs }}
+
+      - name: Install
+        run: |
+          cargo install --path . ${{ matrix.flags }}
+
+      - name: Check
+        run: |
+          rocd --help
+
+  # documentation build (using docker)
+  linux-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build docs
+        run: |
+          ./script/generate_docs.py

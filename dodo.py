@@ -38,11 +38,14 @@ def _cargo_flags():
     ]
 
     if ARGS['features'] is not None:
+        # override default features
         flags += [
             '--no-default-features',
             '--features=' + str(ARGS['features']),
         ]
     else:
+        # use default features from Cargo.toml + automatically add
+        # some more depending on platform
         features = ['driver-tests']
         if platform.system() == 'Linux':
             features += ['pipewire']
