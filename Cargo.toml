@@ -27,7 +27,7 @@ license = "MPL-2.0"
 default = ["daemon"]
 daemon = []
 driver-tests = []
-pipewire = ["dep:pipewire"]
+pipewire = ["dep:libspa", "dep:pipewire"]
 
 [lib]
 name = "rocd"
@@ -68,7 +68,6 @@ features = ["json", "stream"]
 async-trait = "0.1.88"
 axum-server = "0.7.2"
 derive_builder = "0.20.2"
-libspa = "0.8.0"
 quick_cache = "0.6.13"
 rand = "0.9.1"
 redb = "2.4.0"
@@ -89,6 +88,10 @@ features = ["http2"]
 
 [dependencies.clap]
 workspace = true
+
+[dependencies.libspa]
+version = "0.8.0"
+optional = true
 
 [dependencies.pipewire]
 version = "0.8.0"
