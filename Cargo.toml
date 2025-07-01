@@ -5,7 +5,7 @@ members = ["util"]
 publish = false
 
 [workspace.dependencies.clap]
-version = "4.5.32"
+version = "4.5.40"
 features = ["derive", "wrap_help"]
 
 [workspace.dependencies.serde]
