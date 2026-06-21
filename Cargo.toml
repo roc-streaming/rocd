@@ -5,15 +5,15 @@ members = ["util"]
 publish = false
 
 [workspace.dependencies.clap]
-version = "4.5.32"
+version = "4.6.1"
 features = ["derive", "wrap_help"]
 
 [workspace.dependencies.serde]
-version = "1.0.219"
+version = "1.0.228"
 features = ["derive"]
 
 [workspace.dependencies.serde_json]
-version = "1.0.140"
+version = "1.0.150"
 
 [package]
 name = "rocd"
@@ -27,7 +27,7 @@ license = "MPL-2.0"
 default = ["daemon"]
 daemon = []
 driver-tests = []
-pipewire = ["dep:libspa", "dep:pipewire"]
+pipewire = ["dep:libspa", "dep:libspa-sys", "dep:pipewire"]
 
 [lib]
 name = "rocd"
@@ -52,49 +52,53 @@ redundant_closure = "allow"
 upper_case_acronyms = "allow"
 
 [dev-dependencies]
-assertables = "9.5.1"
-ctor = "0.4.1"
+assertables = "9.9.0"
+ctor = "0.4.3"
 procspawn = "1.0.1"
-progenitor-client = "0.11.0"
-tempfile = "3.19.1"
+progenitor-client = "0.11.2"
+tempfile = "3.27.0"
 test-context = "0.4.1"
-tracing-test = "0.2.5"
+tracing-test = "0.2.6"
 
 [dev-dependencies.reqwest]
-version = "0.12.15"
+version = "0.12.28"
 features = ["json", "stream"]
 
 [dependencies]
-async-trait = "0.1.88"
-axum-server = "0.7.2"
+async-trait = "0.1.89"
+axum-server = "0.7.3"
 derive_builder = "0.20.2"
-quick_cache = "0.6.13"
-rand = "0.9.1"
-redb = "2.4.0"
-regex = "1.11.1"
+quick_cache = "0.6.23"
+rand = "0.9.4"
+redb = "2.6.3"
+regex = "1.12.4"
 regex_static = "0.1.1"
-rmp-serde = "1.3.0"
+rmp-serde = "1.3.1"
 sha2 = "0.10.9"
-thiserror = "2.0.12"
-tower = "0.5.2"
-tracing = "0.1.41"
-tracing-core = "0.1.33"
-url = "2.5.4"
+thiserror = "2.0.18"
+tower = "0.5.3"
+tracing = "0.1.44"
+tracing-core = "0.1.36"
+url = "2.5.8"
 utoipa-axum = "0.2.0"
 
 [dependencies.axum]
-version = "0.8.4"
+version = "0.8.9"
 features = ["http2"]
 
 [dependencies.clap]
 workspace = true
 
 [dependencies.libspa]
-version = "0.8.0"
+version = "0.10.0"
+optional = true
+
+[dependencies.libspa-sys]
+version = "0.10.0"
 optional = true
 
 [dependencies.pipewire]
-version = "0.8.0"
+version = "0.10.0"
 optional = true
 
 [dependencies.serde]
@@ -104,27 +108,27 @@ workspace = true
 workspace = true
 
 [dependencies.strum]
-version = "0.27.1"
+version = "0.27.2"
 features = ["derive"]
 
 [dependencies.time]
-version = "0.3.41"
+version = "0.3.51"
 features = ["formatting", "macros"]
 
 [dependencies.tokio]
-version = "1.44.2"
+version = "1.52.3"
 features = ["full"]
 
 [dependencies.tower-http]
-version = "0.6.4"
+version = "0.6.11"
 features = ["normalize-path", "trace"]
 
 [dependencies.tracing-subscriber]
-version = "0.3.19"
+version = "0.3.23"
 features = ["local-time"]
 
 [dependencies.utoipa]
-version = "5.3.1"
+version = "5.5.0"
 features = ["axum_extras", "preserve_order", "preserve_path_order", "yaml"]
 
 [dependencies.utoipa-redoc]

@@ -1,16 +1,22 @@
-# build
+# build artifacts
 /target/
 /site/
 /openapi/openapi.html
-.doit.*
+
+# caches
+/tags
+/.pixi
+/.task
+/.cache
 __pycache__
 *.pyc
 
-# editors
+# dev tools
 *.sw[nop]
 .dir-config.el
-/.cache/
-/tags
+.justfile
+.agent-shell
+.opencode
 
 # personal
-/TODO.org
+TODO.org

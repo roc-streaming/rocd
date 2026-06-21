@@ -147,8 +147,8 @@ pub mod types {
     impl ::std::fmt::Display for ConnectionType {
         fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
             match *self {
-                Self::Endpoint => write!(f, "endpoint"),
-                Self::External => write!(f, "external"),
+                Self::Endpoint => f.write_str("endpoint"),
+                Self::External => f.write_str("external"),
             }
         }
     }
@@ -228,8 +228,8 @@ pub mod types {
     impl ::std::fmt::Display for DriverId {
         fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
             match *self {
-                Self::Unspecified => write!(f, "unspecified"),
-                Self::Pipewire => write!(f, "pipewire"),
+                Self::Unspecified => f.write_str("unspecified"),
+                Self::Pipewire => f.write_str("pipewire"),
             }
         }
     }
@@ -312,9 +312,9 @@ pub mod types {
     impl ::std::fmt::Display for EndpointDir {
         fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
             match *self {
-                Self::Input => write!(f, "input"),
-                Self::Output => write!(f, "output"),
-                Self::Duplex => write!(f, "duplex"),
+                Self::Input => f.write_str("input"),
+                Self::Output => f.write_str("output"),
+                Self::Duplex => f.write_str("duplex"),
             }
         }
     }
@@ -452,8 +452,8 @@ pub mod types {
     impl ::std::fmt::Display for EndpointType {
         fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
             match *self {
-                Self::SystemDevice => write!(f, "system_device"),
-                Self::StreamingDevice => write!(f, "streaming_device"),
+                Self::SystemDevice => f.write_str("system_device"),
+                Self::StreamingDevice => f.write_str("streaming_device"),
             }
         }
     }
@@ -587,7 +587,7 @@ impl Client {
     pub fn new(baseurl: &str) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         let client = {
-            let dur = std::time::Duration::from_secs(15);
+            let dur = ::std::time::Duration::from_secs(15u64);
             reqwest::ClientBuilder::new().connect_timeout(dur).timeout(dur)
         };
         #[cfg(target_arch = "wasm32")]
@@ -623,7 +623,6 @@ impl ClientInfo<()> for Client {
 }
 impl ClientHooks<()> for &Client {}
 #[allow(clippy::all)]
-#[allow(elided_named_lifetimes)]
 impl Client {
     /**Sends a `GET` request to `/peers`
 

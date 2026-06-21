@@ -26,8 +26,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # devloper build (using doit)
-  linux-devel:
+  # user build (using cargo install)
+  linux-user:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default
+            flags: --features=
+            libs:
+
+          - name: pipewire
+            flags: --features=pipewire
+            libs: libpipewire-0.3-dev libspa-0.2-dev
+
+    name: linux-user/${{ matrix.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install libs
+        uses: roc-streaming/ci/actions/install-packages@main
+        with:
+          packages: ${{ matrix.libs }}
+
+      - name: Cargo install
+        run: |
+          cargo install --path . ${{ matrix.flags }}
+
+      - name: Run help
+        run: |
+          rocd --help
+
+  # developer build (using pixi and task)
+  linux-dev:
     runs-on: ubuntu-latest
 
     strategy:
@@ -55,7 +92,10 @@ jobs:
     name: linux-dev/${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      - name: Install pixi
+        uses: roc-streaming/ci/actions/install-pixi@main
 
       - name: Install rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -64,15 +104,6 @@ jobs:
         uses: roc-streaming/ci/actions/install-packages@main
         with:
           packages: ${{ matrix.libs }}
-
-      - name: Install python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
-
-      - name: Install doit
-        run: |
-          pip install doit
 
       - name: Run init
         run: |
@@ -80,57 +111,23 @@ jobs:
 
       - name: Dev profile
         run: |
-          doit all ${{ matrix.flags }}
+          pixi run task profile=dev ${{ matrix.flags }}
 
       - name: Release profile
         run: |
-          doit all profile=release ${{ matrix.flags }}
+          pixi run task profile=release ${{ matrix.flags }}
 
-  # user build (using cargo install)
-  linux-user:
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: default
-            flags: --features=
-            libs:
-
-          - name: pipewire
-            flags: --features=pipewire
-            libs: libpipewire-0.3-dev libspa-0.2-dev
-
-    name: linux-user/${{ matrix.name }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: Install libs
-        uses: roc-streaming/ci/actions/install-packages@main
-        with:
-          packages: ${{ matrix.libs }}
-
-      - name: Install
-        run: |
-          cargo install --path . ${{ matrix.flags }}
-
-      - name: Check
-        run: |
-          rocd --help
-
-  # documentation build (using docker)
+  # documentation build (using pixi and task)
   linux-docs:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      - name: Install pixi
+        uses: roc-streaming/ci/actions/install-pixi@main
 
       - name: Build docs
         run: |
-          ./script/generate_docs.py
+          pixi run task docs

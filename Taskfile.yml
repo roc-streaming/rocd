@@ -1,0 +1,150 @@
+version: '3'
+
+vars:
+  # YAML anchors (`&name`) and aliases (`*name`) are a YAML feature, not a Task
+  # feature: aliases reuse these blocks in each task's vars/env below.
+  # If these were normal global Task vars, they would expand here in global
+  # scope, where CLI args like `profile=dev` are empty. Anchors let us reuse the
+  # template but expand it later in task scope, where those args are available.
+  # `_` is just a throwaway var name; only the anchors are reused.
+  _: &cargo_build_flags >-
+    --profile={{default "dev" .profile}}
+    {{- if hasKey . "features"}}
+    --no-default-features --features={{.features}}
+    {{- else}}
+    --features=driver-tests{{if eq OS "linux"}},pipewire{{end}}
+    {{- end}}
+  _: &cargo_run_flags >-
+    --profile={{default "dev" .profile}}
+  _: &rust_flags >-
+    {{if eq (default "dev" .profile) "dev"}}
+    --deny warnings
+    {{end}}
+
+tasks:
+  default:
+    desc: default target
+    cmds:
+      - task: gen
+      - task: build
+      - task: lint
+      - task: test
+
+  build:
+    desc: build daemon
+    vars:
+      CARGO_BUILD_FLAGS: *cargo_build_flags
+    env:
+      RUSTFLAGS: *rust_flags
+    cmds:
+      - cargo build --workspace {{.CARGO_BUILD_FLAGS}}
+
+  gen:
+    desc: run code generation
+    cmds:
+      - task: gen:spec
+      - task: gen:test
+
+  gen:spec:
+    desc: generate openapi spec
+    vars:
+      CARGO_RUN_FLAGS: *cargo_run_flags
+    cmds:
+      - cargo run {{.CARGO_RUN_FLAGS}} -p util --bin codegen -- --openapi=json -o openapi/openapi.json
+      - cargo run {{.CARGO_RUN_FLAGS}} -p util --bin codegen -- --openapi=yaml -o openapi/openapi.yaml
+
+  gen:test:
+    desc: generate test client
+    vars:
+      CARGO_RUN_FLAGS: *cargo_run_flags
+    cmds:
+      - cargo run {{.CARGO_RUN_FLAGS}} -p util --bin codegen -- --progenitor -o tests/test_client/mod.rs
+
+  lint:
+    desc: run clippy
+    cmds:
+      - cargo clippy
+
+  test:
+    desc: run tests
+    vars:
+      CARGO_BUILD_FLAGS: *cargo_build_flags
+    env:
+      RUSTFLAGS: *rust_flags
+    cmds:
+      - cargo test {{.CARGO_BUILD_FLAGS}}
+
+  fmt:
+    desc: run rustfmt
+    cmds:
+      - cargo fmt
+
+  docs:
+    desc: build all documentation
+    cmds:
+      - task: docs:d2
+      - task: docs:api
+      - task: docs:site
+
+  docs:d2:
+    desc: build svg files from d2 diagrams
+    sources:
+      - docs/diagrams/*.d2
+    generates:
+      - docs/diagrams/*.svg
+    cmds:
+      - for: sources
+        cmd: d2 --theme 0 --dark-theme 200 --pad 5 --scale 0.98 {{.ITEM}}
+
+  docs:api:
+    desc: build openapi.html with redocly
+    sources:
+      - openapi/openapi.json
+    generates:
+      - openapi/openapi.html
+    cmds:
+      - npm exec -y @redocly/cli@2.34.0 -- build-docs -o openapi/openapi.html openapi/openapi.json
+
+  docs:site:
+    desc: build html documentation with mkdocs
+    sources:
+      - mkdocs.yml
+      - docs/**/*
+      - openapi/openapi.html
+    generates:
+      - site/**/*
+    env:
+      NO_MKDOCS_2_WARNING: "1"
+    cmds:
+      - mkdocs build
+
+  docs:serve:
+    desc: run docs server
+    env:
+      NO_MKDOCS_2_WARNING: "1"
+    cmds:
+      - >-
+        watchfiles --target-type command
+        "sh -c 'task docs:d2 docs:api; exec mkdocs serve --no-livereload'"
+        mkdocs.yml docs openapi/openapi.json
+
+  clean:
+    desc: remove build artifacts
+    cmds:
+      - rm -rf target
+      - rm -rf tests/test_client/mod.rs
+      - rm -rf openapi/openapi.json openapi/openapi.yaml
+
+  clean:docs:
+    desc: remove docs artifacts
+    cmds:
+      - rm -rf site
+      - rm -rf docs/diagrams/*.svg
+      - rm -rf openapi/openapi.html
+
+  clean:all:
+    desc: remove everything
+    cmds:
+      - task: clean
+      - task: clean:docs
+      - rm -rf .pixi
