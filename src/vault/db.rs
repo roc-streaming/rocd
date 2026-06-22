@@ -109,12 +109,12 @@ impl Db {
                 };
 
                 let iter =
-                    table.range::<&str>(..).map_err(|err| VaultError::ReadError(err))?;
+                    table.range::<&str>(..).map_err(|err| VaultError::ReadError(err.into()))?;
 
                 let uids = iter
                     .map(|elem| -> Result<Uid> {
                         let (key_guard, _value_guard) =
-                            elem.map_err(|err| VaultError::ReadError(err))?;
+                            elem.map_err(|err| VaultError::ReadError(err.into()))?;
                         let uid = Uid::parse(key_guard.value())
                             .map_err(|err| VaultError::ValidationError(err))?;
                         Ok(uid)
@@ -159,7 +159,7 @@ impl Db {
                 let table = match transaction.open_table(table_definition) {
                     Ok(table) => table,
                     Err(redb::TableError::TableDoesNotExist(_)) => {
-                        return Err(VaultError::UidNotFound(uid));
+                        return Err(VaultError::UidNotFound(uid.into()));
                     },
                     Err(err) => return Err(VaultError::from(err)),
                 };
@@ -167,8 +167,8 @@ impl Db {
                 // read bytes from db
                 let db_value = match table.get(uid.as_str()) {
                     Ok(Some(value)) => value,
-                    Ok(None) => return Err(VaultError::UidNotFound(uid)),
-                    Err(err) => return Err(VaultError::ReadError(err)),
+                    Ok(None) => return Err(VaultError::UidNotFound(uid.into())),
+                    Err(err) => return Err(VaultError::ReadError(err.into())),
                 };
 
                 // deserialize from bytes with messagepack
@@ -223,7 +223,7 @@ impl Db {
                     // write bytes to db
                     table
                         .insert(uid.as_str(), &buffer[..])
-                        .map_err(|err| VaultError::WriteError(err))?;
+                        .map_err(|err| VaultError::WriteError(err.into()))?;
                 }
 
                 transaction.commit()?;
@@ -262,8 +262,8 @@ impl Db {
                     // delete value from db
                     match table.remove(uid.as_str()) {
                         Ok(Some(_)) => (),
-                        Ok(None) => return Err(VaultError::UidNotFound(uid)),
-                        Err(err) => return Err(VaultError::WriteError(err)),
+                        Ok(None) => return Err(VaultError::UidNotFound(uid.into())),
+                        Err(err) => return Err(VaultError::WriteError(err.into())),
                     };
                 }
 

@@ -5,22 +5,22 @@ use crate::dto::{Uid, ValidationError};
 #[derive(thiserror::Error, Debug)]
 pub enum VaultError {
     #[error("can't open db: {0}")]
-    DatabaseError(#[from] redb::DatabaseError),
+    DatabaseError(#[from] Box<redb::DatabaseError>),
 
     #[error("can't open transaction: {0}")]
-    TransactionError(#[from] redb::TransactionError),
+    TransactionError(#[from] Box<redb::TransactionError>),
 
     #[error("can't open table: {0}")]
-    TableError(#[from] redb::TableError),
+    TableError(#[from] Box<redb::TableError>),
 
     #[error("can't read value: {0}")]
-    ReadError(#[source] redb::StorageError),
+    ReadError(#[source] Box<redb::StorageError>),
 
     #[error("can't write value: {0}")]
-    WriteError(#[source] redb::StorageError),
+    WriteError(#[source] Box<redb::StorageError>),
 
     #[error("can't commit transaction: {0}")]
-    CommitError(#[from] redb::CommitError),
+    CommitError(#[from] Box<redb::CommitError>),
 
     #[error("can't decode value: {0}")]
     DecodeError(#[from] rmp_serde::decode::Error),
@@ -35,5 +35,29 @@ pub enum VaultError {
     InvalidArgument(&'static str),
 
     #[error("uid not found: {0}")]
-    UidNotFound(Uid),
+    UidNotFound(Box<Uid>),
+}
+
+impl From<redb::DatabaseError> for VaultError {
+    fn from(err: redb::DatabaseError) -> Self {
+        VaultError::from(Box::new(err))
+    }
+}
+
+impl From<redb::TransactionError> for VaultError {
+    fn from(err: redb::TransactionError) -> Self {
+        VaultError::from(Box::new(err))
+    }
+}
+
+impl From<redb::TableError> for VaultError {
+    fn from(err: redb::TableError) -> Self {
+        VaultError::from(Box::new(err))
+    }
+}
+
+impl From<redb::CommitError> for VaultError {
+    fn from(err: redb::CommitError) -> Self {
+        VaultError::from(Box::new(err))
+    }
 }
