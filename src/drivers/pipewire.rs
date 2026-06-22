@@ -1,17 +1,26 @@
 // Copyright (c) Roc Streaming authors
 // Licensed under MPL-2.0
+#![allow(non_upper_case_globals)]
+
 use crate::drivers::driver::*;
 use crate::drivers::error::*;
 use crate::dto::DriverId;
 
 use async_trait::async_trait;
+use libspa::param::ParamType;
+use libspa::pod::deserialize::PodDeserializer;
+use libspa::pod::{Object, Pod, Value};
 use libspa::utils::dict::DictRef;
 use libspa::utils::result::AsyncSeq;
-use pipewire::context::Context;
-use pipewire::core::{Core, Info};
-use pipewire::main_loop::MainLoop;
-use pipewire::registry::{GlobalObject, Registry};
+use libspa_sys::SPA_PROP_device;
+use pipewire::context::ContextRc;
+use pipewire::core::{CoreRc, Info};
+use pipewire::main_loop::MainLoopRc;
+use pipewire::node::{Node, NodeListener};
+use pipewire::registry::{GlobalObject, RegistryRc};
+use pipewire::types::ObjectType;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::thread::{self};
@@ -82,6 +91,8 @@ impl Driver for PipewireDriver {
 }
 
 impl PipewireDriver {
+    /// Send PwReq to pipewire thread and wait PwResp.
+    /// PwReq + PwResp are packed into PwTask.
     async fn round_trip(self: &Arc<Self>, req: PwReq) -> DriverResult<PwResp> {
         let (resp_tx, resp_rx) = tokio::sync::oneshot::channel();
 
@@ -112,29 +123,42 @@ enum PwResp {
     None,
 }
 
+struct PwDev {
+    node: Node,
+    node_listener: NodeListener,
+    props: PwProps,
+}
+
+#[derive(Debug, Default, PartialEq)]
+struct PwProps {
+    device: String,
+    volume: f32,
+}
+
 /// Single-threaded pipewire mainloop.
 struct PwLoop {
-    mainloop: MainLoop,
-    context: Context,
+    mainloop: MainLoopRc,
+    context: ContextRc,
     conn: RefCell<Option<PwConn>>,
 }
 
 struct PwConn {
-    core: Core,
+    core: CoreRc,
     core_listener: pipewire::core::Listener,
-    registry: Registry,
+    registry: RegistryRc,
     registry_listener: pipewire::registry::Listener,
+    devices: HashMap<u32, PwDev>,
 }
 
 impl PwLoop {
     fn open_and_connect() -> DriverResult<Rc<PwLoop>> {
         tracing::debug!("creating mainloop");
 
-        let mainloop = MainLoop::new(None).map_err(|err| {
+        let mainloop = MainLoopRc::new(None).map_err(|err| {
             DriverError::OpenError(format!("can't open pipewire main loop: {err}"))
         })?;
 
-        let context = Context::new(&mainloop).map_err(|err| {
+        let context = ContextRc::new(&mainloop, None).map_err(|err| {
             DriverError::OpenError(format!("can't open pipewire context: {err}"))
         })?;
 
@@ -150,7 +174,7 @@ impl PwLoop {
         // reset previous connection, if any
         drop(self.conn.take());
 
-        let core = self.context.connect(None).map_err(|err| {
+        let core = self.context.connect_rc(None).map_err(|err| {
             DriverError::OpenError(format!("can't connect to pipewire: {err}"))
         })?;
 
@@ -158,19 +182,19 @@ impl PwLoop {
             .add_listener_local()
             .info({
                 let this = Rc::clone(self);
-                move |info| this.on_info(info)
+                move |info| this.on_core_info(info)
             })
             .done({
                 let this = Rc::clone(self);
-                move |id, seq| this.on_done(id, seq)
+                move |id, seq| this.on_core_done(id, seq)
             })
             .error({
                 let this = Rc::clone(self);
-                move |id, seq, res, msg| this.on_error(id, seq, res, msg)
+                move |id, seq, res, msg| this.on_core_error(id, seq, res, msg)
             })
             .register();
 
-        let registry = core.get_registry().map_err(|err| {
+        let registry = core.get_registry_rc().map_err(|err| {
             DriverError::OpenError(format!("can't get pipewire registry: {err}"))
         })?;
 
@@ -178,11 +202,11 @@ impl PwLoop {
             .add_listener_local()
             .global({
                 let this = Rc::clone(self);
-                move |obj| this.on_add(obj)
+                move |obj| this.on_registry_add(obj)
             })
             .global_remove({
                 let this = Rc::clone(self);
-                move |obj_id| this.on_remove(obj_id)
+                move |obj_id| this.on_registry_remove(obj_id)
             })
             .register();
 
@@ -191,6 +215,7 @@ impl PwLoop {
             core_listener,
             registry,
             registry_listener,
+            devices: HashMap::new(),
         });
         Ok(())
     }
@@ -208,8 +233,9 @@ impl PwLoop {
         tracing::debug!("leaving mainloop");
     }
 
-    fn on_info(self: &Rc<Self>, info: &Info) {
-        tracing::trace!("on_info: {:?}", info);
+    /// Called by core_listener when connected to core.
+    fn on_core_info(self: &Rc<Self>, info: &Info) {
+        tracing::trace!("on_core_info: {:?}", info);
 
         tracing::debug!(
             "connected to pipewire: version={} cookie={}",
@@ -218,32 +244,119 @@ impl PwLoop {
         );
     }
 
-    fn on_done(self: &Rc<Self>, id: u32, seq: AsyncSeq) {
-        tracing::trace!("on_done: id={:?} seq={:?}", id, seq);
+    /// Called by core_listener after core.sync.
+    fn on_core_done(self: &Rc<Self>, id: u32, seq: AsyncSeq) {
+        tracing::trace!("on_core_done: id={:?} seq={:?}", id, seq);
 
         // TODO: handle initial sync
     }
 
-    fn on_error(self: &Rc<Self>, id: u32, seq: i32, res: i32, msg: &str) {
-        tracing::trace!("on_error id={:?} seq={:?} res={:?} msg={:?}", id, seq, res, msg);
+    /// Called by core_listener on asynchronous error.
+    fn on_core_error(self: &Rc<Self>, id: u32, seq: i32, res: i32, msg: &str) {
+        tracing::trace!("on_core_error id={:?} seq={:?} res={:?} msg={:?}", id, seq, res, msg);
 
         tracing::warn!("got error from pipewire: {}", msg);
 
         // TODO: reconnect, emit event (if id == 0)
     }
 
-    fn on_add(self: &Rc<Self>, obj: &GlobalObject<&DictRef>) {
-        tracing::trace!("on_add: obj={:?}", obj);
+    /// Called by registry_listener when a global is added.
+    /// The most interesting type of 'global' is 'node'.
+    /// Audio devices are nodes.
+    fn on_registry_add(self: &Rc<Self>, obj: &GlobalObject<&DictRef>) {
+        tracing::trace!("on_registry_add: obj={:?}", obj);
+
+        let mut conn_ref = self.conn.borrow_mut();
+        if !conn_ref.is_some() {
+            return;
+        }
+        let conn = conn_ref.as_mut().unwrap();
+
+        match obj.type_ {
+            ObjectType::Node => {
+                let node: Node = conn.registry.bind(obj).unwrap();
+
+                let node_listener = node
+                    .add_listener_local()
+                    .param({
+                        let this = Rc::clone(self);
+                        move |seq, param_type, param_index, _next, param| {
+                            this.on_node_param(seq, param_type, param_index, param);
+                        }
+                    })
+                    .register();
+
+                node.subscribe_params(&[ParamType::Props]);
+
+                conn.devices
+                    .insert(obj.id, PwDev { node, node_listener, props: PwProps::default() });
+            },
+
+            _ => (),
+        };
 
         tracing::debug!("object added: {}", obj.id);
         // TODO: update list, emit event
     }
 
-    fn on_remove(self: &Rc<Self>, obj_id: u32) {
-        tracing::trace!("on_remove: obj_id={:?}", obj_id);
+    /// Called by registry_listener when a global is removed.
+    fn on_registry_remove(self: &Rc<Self>, obj_id: u32) {
+        tracing::trace!("on_registry_remove: obj_id={:?}", obj_id);
 
         tracing::debug!("object removed: {}", obj_id);
         // TODO: update list, emit event
+    }
+
+    /// Called by node_listener when node parameter is changed.
+    /// The most interesting type of node parameter is 'Props'.
+    /// Things like device muted state are represented as fields inside
+    /// 'Props' parameter of 'node' object of the device.
+    fn on_node_param(
+        self: &Rc<Self>, seq: i32, param_type: ParamType, param_index: u32,
+        param: Option<&Pod>,
+    ) {
+        tracing::trace!(
+            "on_node_param: seq={:?} param_type={:?} param_index={:?}",
+            seq,
+            param_type,
+            param_index
+        );
+
+        match param_type {
+            ParamType::Props if param.is_some() && param.unwrap().is_object() => {
+                if let Ok((_, value)) =
+                    PodDeserializer::deserialize_any_from(param.unwrap().as_bytes())
+                {
+                    if let Value::Object(obj) = value {
+                        self.on_node_props(obj);
+                    }
+                }
+            },
+            _ => (),
+        }
+    }
+
+    /// Called from on_node_param() when node 'Props' parameter is changed.
+    /// 'Value' contains decoded properties.
+    fn on_node_props(self: &Rc<Self>, obj: Object) {
+        tracing::trace!("on_node_props: obj={:?}", obj);
+
+        let mut props = PwProps::default();
+
+        for prop in obj.properties {
+            match prop.key {
+                SPA_PROP_device => {
+                    if let Value::String(value) = prop.value {
+                        props.device = from_pw_string(value);
+                    }
+                },
+                _ => (),
+            }
+        }
+
+        tracing::debug!("on_node_props: props={:?}", props);
+
+        // TODO: read relevant properties into PwProps
     }
 
     fn on_task(self: &Rc<Self>, task: PwTask) {
@@ -262,4 +375,11 @@ impl PwLoop {
             },
         }
     }
+}
+
+fn from_pw_string(mut s: String) -> String {
+    while s.ends_with('\0') {
+        s.pop();
+    }
+    s
 }
