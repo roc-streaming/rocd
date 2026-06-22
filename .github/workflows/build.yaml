@@ -77,15 +77,11 @@ jobs:
             init: systemctl --user start pipewire
 
           - name: pipewire
-            flags: features=daemon,driver-tests,pipewire
+            flags: features=driver-tests,pipewire
             libs: pipewire libpipewire-0.3-dev libspa-0.2-dev
             init: systemctl --user start pipewire
 
-          - name: minimal-daemon
-            flags: features=daemon
-            libs:
-
-          - name: minimal-lib
+          - name: minimal
             flags: features=
             libs:
 

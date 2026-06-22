@@ -24,8 +24,7 @@ repository = "https://github.com/roc-streaming/rocd"
 license = "MPL-2.0"
 
 [features]
-default = ["daemon"]
-daemon = []
+default = []
 driver-tests = []
 pipewire = ["dep:libspa", "dep:libspa-sys", "dep:pipewire"]
 
@@ -40,7 +39,6 @@ name = "rocd"
 path = "src/main.rs"
 test = false
 doctest = false
-required-features = ["daemon"]
 
 [lints.rust]
 dead_code = "allow"
